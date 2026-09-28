@@ -72,13 +72,17 @@ export function CartProvider({ children }) {
     }));
   };
 
+  const [coupon, setCoupon] = useState(null);
+
   const clearCart = () => {
     setItems([]);
+    setCoupon(null);
   };
 
+  const discount = coupon ? Number(coupon.discount) || 0 : 0;
   const cartSubtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const cartTotal = cartSubtotal + (deliveryType === 'delivery' ? deliveryFee : 0);
+  const cartTotal = Math.max(0, cartSubtotal + (deliveryType === 'delivery' ? deliveryFee : 0) - discount);
 
   return (
     <CartContext.Provider value={{
@@ -93,7 +97,10 @@ export function CartProvider({ children }) {
       deliveryType,
       setDeliveryType,
       deliveryFee,
-      setDeliveryFee
+      setDeliveryFee,
+      coupon,
+      setCoupon,
+      discount
     }}>
       {children}
     </CartContext.Provider>

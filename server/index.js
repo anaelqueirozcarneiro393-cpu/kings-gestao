@@ -258,6 +258,92 @@ app.get('/api/public/menu', async (req, res) => {
       };
     });
 
+    // Garante que o cardápio oficial do King's Burguer seja retornado mesmo que o banco ainda não tenha sido populado
+    const OFFICIAL_BURGUER_CATEGORIES = [
+      { id: 10, business_id: 2, name: 'Destaque & Combos', order_index: 1, active: 1 },
+      { id: 11, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 2, active: 1 },
+      { id: 12, business_id: 2, name: 'Acompanhamentos', order_index: 3, active: 1 },
+      { id: 13, business_id: 2, name: 'Bebidas', order_index: 4, active: 1 }
+    ];
+
+    const OFFICIAL_BURGUER_PRODUCTS = [
+      {
+        id: 101, business_id: 2, category_id: 10, category_name: 'Destaque & Combos',
+        name: "2 King's Classic + Coca 350ml",
+        description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml",
+        image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
+        price: 36.90, active: 1, availability: 1, order_index: 1, addon_groups: []
+      },
+      {
+        id: 102, business_id: 2, category_id: 10, category_name: 'Destaque & Combos',
+        name: 'Combo Double Bacon',
+        description: 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon',
+        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80',
+        price: 39.90, active: 1, availability: 1, order_index: 2, addon_groups: []
+      },
+      {
+        id: 103, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal',
+        name: 'Kings Double Bacon',
+        description: 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.',
+        image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80',
+        price: 32.90, active: 1, availability: 1, order_index: 1, addon_groups: []
+      },
+      {
+        id: 104, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal',
+        name: 'Kings Classic',
+        description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.',
+        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
+        price: 19.90, active: 1, availability: 1, order_index: 2, addon_groups: []
+      },
+      {
+        id: 105, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal',
+        name: 'Kings Egg Bacon',
+        description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.',
+        image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80',
+        price: 27.90, active: 1, availability: 1, order_index: 3, addon_groups: []
+      },
+      {
+        id: 106, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal',
+        name: 'Kings Bacon',
+        description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.',
+        image_url: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80',
+        price: 24.90, active: 1, availability: 1, order_index: 4, addon_groups: []
+      },
+      {
+        id: 107, business_id: 2, category_id: 12, category_name: 'Acompanhamentos',
+        name: 'Batata Frita 150g',
+        description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição, São O Acompanhamento Ideal Para Hambúrgueres, Carnes e Refeições Rápidas, Ou Perfeitas Para Saborear Como Um Petisco Saboroso a Qualquer Hora Do Dia.',
+        image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
+        price: 12.90, active: 1, availability: 1, order_index: 1, addon_groups: []
+      },
+      {
+        id: 108, business_id: 2, category_id: 12, category_name: 'Acompanhamentos',
+        name: 'Batata Frita 200g+ Cheddar e Bacon Crocante',
+        description: '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.',
+        image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80',
+        price: 17.90, active: 1, availability: 1, order_index: 2, addon_groups: []
+      },
+      {
+        id: 109, business_id: 2, category_id: 13, category_name: 'Bebidas',
+        name: 'Coca-Cola 350ml',
+        description: 'Lata 350ml estupidamente gelada.',
+        image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
+        price: 6.00, active: 1, availability: 1, order_index: 1, addon_groups: []
+      }
+    ];
+
+    let mergedCategories = [...(categories || [])];
+    const hasBurguerCats = mergedCategories.some(c => c.business_id === 2);
+    if (!hasBurguerCats) {
+      mergedCategories = [...mergedCategories, ...OFFICIAL_BURGUER_CATEGORIES];
+    }
+
+    let mergedProducts = [...(productsWithDetails || [])];
+    const hasBurguerProds = mergedProducts.some(p => p.business_id === 2);
+    if (!hasBurguerProds) {
+      mergedProducts = [...mergedProducts, ...OFFICIAL_BURGUER_PRODUCTS];
+    }
+
     const settingsRows = await db.prepare('SELECT * FROM settings').all();
     const settings = {};
     (settingsRows || []).forEach(r => { settings[r.key] = r.value; });
@@ -268,8 +354,8 @@ app.get('/api/public/menu', async (req, res) => {
         { id: 2, name: "KING'S BURGUER", slug: 'burguer', tagline: 'Burguers artesanais feitos no fogo', is_open: true, active: 1, status: 'open', opening_time: '18:00', closing_time: '02:00' },
         { id: 3, name: "KING'S PIZZA", slug: 'pizza', tagline: 'Massas artesanais fermentadas', is_open: false, active: 0, status: 'coming_soon', opening_time: '18:00', closing_time: '00:00' }
       ],
-      categories: categories || [],
-      products: productsWithDetails || [],
+      categories: mergedCategories,
+      products: mergedProducts,
       settings
     });
   } catch (err) {
@@ -280,8 +366,27 @@ app.get('/api/public/menu', async (req, res) => {
         { id: 2, name: "KING'S BURGUER", slug: 'burguer', tagline: 'Burguers artesanais feitos no fogo', is_open: true, active: 1, status: 'open', opening_time: '18:00', closing_time: '02:00' },
         { id: 3, name: "KING'S PIZZA", slug: 'pizza', tagline: 'Massas artesanais fermentadas', is_open: false, active: 0, status: 'coming_soon', opening_time: '18:00', closing_time: '00:00' }
       ],
-      categories: [],
-      products: [],
+      categories: [
+        { id: 1, business_id: 1, name: 'Açaí no Copo', order_index: 1, active: 1 },
+        { id: 2, business_id: 1, name: 'Barcas & Roletas', order_index: 2, active: 1 },
+        { id: 10, business_id: 2, name: 'Destaque & Combos', order_index: 1, active: 1 },
+        { id: 11, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 2, active: 1 },
+        { id: 12, business_id: 2, name: 'Acompanhamentos', order_index: 3, active: 1 },
+        { id: 13, business_id: 2, name: 'Bebidas', order_index: 4, active: 1 }
+      ],
+      products: [
+        { id: 1, business_id: 1, category_id: 1, category_name: 'Açaí no Copo', name: 'Açaí no Copo 300ml', description: 'Copo de 300ml montado com nosso açaí cremoso batido na hora com xarope natural.', image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', price: 16.90, active: 1, availability: 1, order_index: 1, addon_groups: [] },
+        { id: 2, business_id: 1, category_id: 1, category_name: 'Açaí no Copo', name: 'Açaí no Copo 500ml', description: 'O clássico mais pedido! 500ml de puro açaí cremoso com camadas generosas de complementos.', image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', price: 22.90, active: 1, availability: 1, order_index: 2, addon_groups: [] },
+        { id: 101, business_id: 2, category_id: 10, category_name: 'Destaque & Combos', name: "2 King's Classic + Coca 350ml", description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml", image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', price: 36.90, active: 1, availability: 1, order_index: 1, addon_groups: [] },
+        { id: 102, business_id: 2, category_id: 10, category_name: 'Destaque & Combos', name: 'Combo Double Bacon', description: 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', price: 39.90, active: 1, availability: 1, order_index: 2, addon_groups: [] },
+        { id: 103, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', name: 'Kings Double Bacon', description: 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', price: 32.90, active: 1, availability: 1, order_index: 1, addon_groups: [] },
+        { id: 104, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', name: 'Kings Classic', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', price: 19.90, active: 1, availability: 1, order_index: 2, addon_groups: [] },
+        { id: 105, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', name: 'Kings Egg Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', price: 27.90, active: 1, availability: 1, order_index: 3, addon_groups: [] },
+        { id: 106, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', name: 'Kings Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', price: 24.90, active: 1, availability: 1, order_index: 4, addon_groups: [] },
+        { id: 107, business_id: 2, category_id: 12, category_name: 'Acompanhamentos', name: 'Batata Frita 150g', description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', price: 12.90, active: 1, availability: 1, order_index: 1, addon_groups: [] },
+        { id: 108, business_id: 2, category_id: 12, category_name: 'Acompanhamentos', name: 'Batata Frita 200g+ Cheddar e Bacon Crocante', description: '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', price: 17.90, active: 1, availability: 1, order_index: 2, addon_groups: [] },
+        { id: 109, business_id: 2, category_id: 13, category_name: 'Bebidas', name: 'Coca-Cola 350ml', description: 'Lata 350ml estupidamente gelada.', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', price: 6.00, active: 1, availability: 1, order_index: 1, addon_groups: [] }
+      ],
       settings: {}
     });
   }
@@ -410,7 +515,9 @@ app.post(['/api/public/orders', '/api/orders/manual'], orderLimiter, (req, res) 
     items, // array of { product_id, business_id, quantity, unit_price, notes, addons: [{ addon_id, name, unit_price }] }
     payment_method, // 'PIX', 'DINHEIRO', 'CARTAO_DEBITO', 'CARTAO_CREDITO'
     payment_change,
-    source // 'cardapio', 'manual_whatsapp', etc.
+    source, // 'cardapio', 'manual_whatsapp', etc.
+    coupon_code,
+    discount
   } = req.body;
 
   if (!customer_name || !customer_phone || !items || !items.length) {
@@ -483,7 +590,22 @@ app.post(['/api/public/orders', '/api/orders/manual'], orderLimiter, (req, res) 
     deliveryFee = settingFee ? Number(settingFee.value) : 5.0;
   }
 
-  const finalTotal = calculatedSubtotal + deliveryFee;
+  // Process coupon & discount
+  let verifiedDiscount = Number(discount) || 0;
+  let verifiedCoupon = coupon_code ? String(coupon_code).trim().toUpperCase() : null;
+
+  if (verifiedCoupon) {
+    try {
+      const cp = db.prepare('SELECT * FROM coupons WHERE code = ? AND active = 1').get(verifiedCoupon);
+      if (cp) {
+        db.prepare('UPDATE coupons SET used_count = COALESCE(used_count, 0) + 1 WHERE id = ?').run(cp.id);
+      }
+    } catch (e) {
+      console.warn('[COUPON USE]', e.message);
+    }
+  }
+
+  const finalTotal = Math.max(0, calculatedSubtotal + deliveryFee - verifiedDiscount);
 
   // Insert order
   const insertOrder = db.prepare(`
@@ -492,7 +614,7 @@ app.post(['/api/public/orders', '/api/orders/manual'], orderLimiter, (req, res) 
       delivery_address, delivery_neighborhood, notes, subtotal,
       delivery_fee, discount, total, payment_method, payment_change,
       payment_status, status, source
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, 'pendente', 'novo', ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', 'novo', ?)
   `);
 
   const info = insertOrder.run(
@@ -505,6 +627,7 @@ app.post(['/api/public/orders', '/api/orders/manual'], orderLimiter, (req, res) 
     notes || '',
     calculatedSubtotal,
     deliveryFee,
+    verifiedDiscount,
     finalTotal,
     payment_method,
     payment_change || 0,
@@ -787,6 +910,381 @@ app.delete('/api/products/:id', (req, res) => {
   const { id } = req.params;
   db.prepare('DELETE FROM products WHERE id = ?').run(id);
   res.json({ success: true });
+});
+
+// ----------------------------------------------------
+// 5.1. CATEGORIES MANAGEMENT (GESTOR DE CARDÁPIO)
+// ----------------------------------------------------
+app.get('/api/categories', async (req, res) => {
+  try {
+    const { business_id } = req.query;
+    let sql = 'SELECT * FROM categories';
+    const params = [];
+    if (business_id) {
+      sql += ' WHERE business_id = ?';
+      params.push(business_id);
+    }
+    sql += ' ORDER BY order_index ASC, id ASC';
+    const rows = await db.prepare(sql).all(...params);
+    res.json(rows || []);
+  } catch (err) {
+    res.json([]);
+  }
+});
+
+app.post('/api/categories', async (req, res) => {
+  try {
+    const { business_id, name, order_index, active } = req.body;
+    if (!business_id || !name) {
+      return res.status(400).json({ error: 'Operação e nome da categoria são obrigatórios' });
+    }
+
+    const stmt = db.prepare('INSERT INTO categories (business_id, name, order_index, active) VALUES (?, ?, ?, ?)');
+    const info = await stmt.run(business_id, name, order_index || 1, active !== undefined ? active : 1);
+    const created = await db.prepare('SELECT * FROM categories WHERE id = ?').get(info.lastInsertRowid);
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, order_index, active } = req.body;
+    await db.prepare(`
+      UPDATE categories SET
+        name = COALESCE(?, name),
+        order_index = COALESCE(?, order_index),
+        active = COALESCE(?, active)
+      WHERE id = ?
+    `).run(name, order_index, active, id);
+    const updated = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint especial para restaurar / carregar o cardápio oficial do King's Burguer diretamente no banco
+app.post('/api/menu/reset-burguer', async (req, res) => {
+  try {
+    // 1. Limpa produtos e categorias antigas do Burguer (business_id = 2)
+    try {
+      await db.prepare('DELETE FROM recipe_items WHERE product_id IN (SELECT id FROM products WHERE business_id = 2)').run();
+      await db.prepare('DELETE FROM products WHERE business_id = 2').run();
+      await db.prepare('DELETE FROM categories WHERE business_id = 2').run();
+    } catch (e) {
+      console.warn('[RESET BURGUER CLEAN]', e.message);
+    }
+
+    // 2. Insere as 4 categorias oficiais
+    const catStmt = db.prepare('INSERT INTO categories (id, business_id, name, order_index, active) VALUES (?, ?, ?, ?, ?)');
+    await catStmt.run(10, 2, 'Destaque & Combos', 1, 1);
+    await catStmt.run(11, 2, 'Hambúrguer Artesanal', 2, 1);
+    await catStmt.run(12, 2, 'Acompanhamentos', 3, 1);
+    await catStmt.run(13, 2, 'Bebidas', 4, 1);
+
+    // 3. Insere os 9 produtos oficiais
+    const prodStmt = db.prepare(`
+      INSERT INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?)
+    `);
+
+    await prodStmt.run(101, 2, 10, "2 King's Classic + Coca 350ml", "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml", 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', 36.90, 1);
+    await prodStmt.run(102, 2, 10, 'Combo Double Bacon', 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', 39.90, 2);
+    await prodStmt.run(103, 2, 11, 'Kings Double Bacon', 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', 32.90, 1);
+    await prodStmt.run(104, 2, 11, 'Kings Classic', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', 19.90, 2);
+    await prodStmt.run(105, 2, 11, 'Kings Egg Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', 27.90, 3);
+    await prodStmt.run(106, 2, 11, 'Kings Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', 24.90, 4);
+    await prodStmt.run(107, 2, 12, 'Batata Frita 150g', 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição, São O Acompanhamento Ideal Para Hambúrgueres, Carnes e Refeições Rápidas, Ou Perfeitas Para Saborear Como Um Petisco Saboroso a Qualquer Hora Do Dia.', 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', 12.90, 1);
+    await prodStmt.run(108, 2, 12, 'Batata Frita 200g+ Cheddar e Bacon Crocante', '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', 17.90, 2);
+    await prodStmt.run(109, 2, 13, 'Coca-Cola 350ml', 'Lata 350ml estupidamente gelada.', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', 6.00, 1);
+
+    res.json({ success: true, message: 'Cardápio oficial do King\'s Burguer carregado com sucesso!' });
+  } catch (err) {
+    console.error('[RESET BURGUER ERROR]', err);
+    res.status(500).json({ error: 'Erro ao restaurar cardápio: ' + err.message });
+  }
+});
+
+// ----------------------------------------------------
+// 5.2. SISTEMA DE CUPONS (100% PERSONALIZÁVEL)
+// ----------------------------------------------------
+app.get('/api/coupons', async (req, res) => {
+  try {
+    const coupons = await db.prepare('SELECT * FROM coupons ORDER BY id DESC').all();
+    res.json(coupons || []);
+  } catch (err) {
+    res.json([]);
+  }
+});
+
+app.post('/api/coupons', async (req, res) => {
+  try {
+    const {
+      code, description, discount_type, discount_value, min_order_value,
+      max_discount_value, usage_limit, expires_at, active,
+      business_id, delivery_type, only_first_order,
+      included_product_ids, excluded_product_ids
+    } = req.body;
+
+    if (!code || !discount_value) {
+      return res.status(400).json({ error: 'Código e valor do desconto são obrigatórios.' });
+    }
+
+    const upperCode = String(code).trim().toUpperCase();
+    const existing = await db.prepare('SELECT id FROM coupons WHERE code = ?').get(upperCode);
+    if (existing) {
+      return res.status(400).json({ error: 'Já existe um cupom cadastrado com este código.' });
+    }
+
+    const stmt = db.prepare(`
+      INSERT INTO coupons (
+        code, description, discount_type, discount_value, min_order_value,
+        max_discount_value, usage_limit, expires_at, active,
+        business_id, delivery_type, only_first_order,
+        included_product_ids, excluded_product_ids
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const result = await stmt.run(
+      upperCode,
+      description || '',
+      discount_type || 'percentage',
+      Number(discount_value),
+      Number(min_order_value || 0),
+      max_discount_value ? Number(max_discount_value) : null,
+      usage_limit ? Number(usage_limit) : null,
+      expires_at || null,
+      active !== undefined ? Number(active) : 1,
+      business_id ? Number(business_id) : null,
+      delivery_type || 'all',
+      only_first_order ? 1 : 0,
+      included_product_ids || '',
+      excluded_product_ids || ''
+    );
+
+    const created = await db.prepare('SELECT * FROM coupons WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/coupons/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      code, description, discount_type, discount_value, min_order_value,
+      max_discount_value, usage_limit, expires_at, active,
+      business_id, delivery_type, only_first_order,
+      included_product_ids, excluded_product_ids
+    } = req.body;
+
+    const upperCode = code ? String(code).trim().toUpperCase() : undefined;
+
+    await db.prepare(`
+      UPDATE coupons SET
+        code = COALESCE(?, code),
+        description = COALESCE(?, description),
+        discount_type = COALESCE(?, discount_type),
+        discount_value = COALESCE(?, discount_value),
+        min_order_value = COALESCE(?, min_order_value),
+        max_discount_value = ?,
+        usage_limit = ?,
+        expires_at = ?,
+        active = COALESCE(?, active),
+        business_id = ?,
+        delivery_type = COALESCE(?, delivery_type),
+        only_first_order = COALESCE(?, only_first_order),
+        included_product_ids = COALESCE(?, included_product_ids),
+        excluded_product_ids = COALESCE(?, excluded_product_ids)
+      WHERE id = ?
+    `).run(
+      upperCode, description, discount_type,
+      discount_value !== undefined ? Number(discount_value) : null,
+      min_order_value !== undefined ? Number(min_order_value) : null,
+      max_discount_value ? Number(max_discount_value) : null,
+      usage_limit ? Number(usage_limit) : null,
+      expires_at || null,
+      active !== undefined ? Number(active) : null,
+      business_id ? Number(business_id) : null,
+      delivery_type,
+      only_first_order !== undefined ? Number(only_first_order) : null,
+      included_product_ids,
+      excluded_product_ids,
+      id
+    );
+
+    const updated = await db.prepare('SELECT * FROM coupons WHERE id = ?').get(id);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/coupons/:id/toggle', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const current = await db.prepare('SELECT * FROM coupons WHERE id = ?').get(id);
+    if (!current) return res.status(404).json({ error: 'Cupom não encontrado' });
+
+    const newActive = current.active ? 0 : 1;
+    await db.prepare('UPDATE coupons SET active = ? WHERE id = ?').run(newActive, id);
+    res.json({ success: true, active: newActive });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/coupons/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.prepare('DELETE FROM coupons WHERE id = ?').run(id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Validação em tempo real do cupom pelo carrinho público (Regras 100% Personalizáveis)
+app.post('/api/public/coupons/validate', async (req, res) => {
+  try {
+    const { code, subtotal, business_id, delivery_type, customer_phone, items } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ valid: false, message: 'Digite um código de cupom.' });
+    }
+
+    const cleanCode = String(code).trim().toUpperCase();
+    const coupon = await db.prepare('SELECT * FROM coupons WHERE UPPER(code) = ?').get(cleanCode);
+
+    if (!coupon) {
+      return res.status(404).json({ valid: false, message: 'Cupom inválido ou inexistente.' });
+    }
+
+    if (!coupon.active) {
+      return res.status(400).json({ valid: false, message: 'Este cupom está temporariamente desativado.' });
+    }
+
+    // 1. Validação de Expiração
+    if (coupon.expires_at) {
+      const expDate = new Date(coupon.expires_at);
+      if (expDate < new Date()) {
+        return res.status(400).json({ valid: false, message: 'Este cupom já expirou.' });
+      }
+    }
+
+    // 2. Validação de Limite de Usos
+    if (coupon.usage_limit && coupon.used_count >= coupon.usage_limit) {
+      return res.status(400).json({ valid: false, message: 'Este cupom já atingiu o limite máximo de utilizações.' });
+    }
+
+    // 3. Validação de Valor Mínimo do Pedido
+    const orderSubtotal = Number(subtotal) || 0;
+    if (coupon.min_order_value && orderSubtotal < Number(coupon.min_order_value)) {
+      return res.status(400).json({
+        valid: false,
+        message: `Válido apenas para pedidos a partir de R$ ${Number(coupon.min_order_value).toFixed(2).replace('.', ',')}.`
+      });
+    }
+
+    // 4. Validação por Operação (Açaí, Burguer, Pizza)
+    if (coupon.business_id && business_id && Number(coupon.business_id) !== Number(business_id)) {
+      const biz = await db.prepare('SELECT name FROM businesses WHERE id = ?').get(coupon.business_id);
+      return res.status(400).json({
+        valid: false,
+        message: `Este cupom é exclusivo da operação ${biz ? biz.name : "específica"}.`
+      });
+    }
+
+    // 5. Validação por Tipo de Entrega (Delivery vs Balcão)
+    if (coupon.delivery_type && coupon.delivery_type !== 'all' && delivery_type) {
+      if (coupon.delivery_type !== delivery_type) {
+        return res.status(400).json({
+          valid: false,
+          message: `Este cupom é válido exclusivamente para ${coupon.delivery_type === 'delivery' ? 'Entrega (Delivery)' : 'Retirada no Balcão'}.`
+        });
+      }
+    }
+
+    // 6. Validação de Primeira Compra por Cliente
+    if (coupon.only_first_order && customer_phone) {
+      const pastOrders = await db.prepare('SELECT COUNT(*) as count FROM orders WHERE customer_phone = ?').get(customer_phone);
+      if (pastOrders && pastOrders.count > 0) {
+        return res.status(400).json({
+          valid: false,
+          message: 'Este cupom é exclusivo para o primeiro pedido do cliente.'
+        });
+      }
+    }
+
+    // 7. Validação de Produtos Inclusos / Permitidos
+    const cartItems = Array.isArray(items) ? items : [];
+    if (coupon.included_product_ids && coupon.included_product_ids.trim()) {
+      const incIds = coupon.included_product_ids.split(',').map(s => Number(s.trim())).filter(Boolean);
+      if (incIds.length > 0) {
+        const hasEligible = cartItems.some(item => incIds.includes(Number(item.product_id)));
+        if (!hasEligible) {
+          return res.status(400).json({
+            valid: false,
+            message: 'O cupom não é aplicável a nenhum dos produtos selecionados no seu carrinho.'
+          });
+        }
+      }
+    }
+
+    // 8. Validação de Produtos Excluídos / Proibidos
+    if (coupon.excluded_product_ids && coupon.excluded_product_ids.trim()) {
+      const excIds = coupon.excluded_product_ids.split(',').map(s => Number(s.trim())).filter(Boolean);
+      if (excIds.length > 0) {
+        const allExcluded = cartItems.every(item => excIds.includes(Number(item.product_id)));
+        if (allExcluded && cartItems.length > 0) {
+          return res.status(400).json({
+            valid: false,
+            message: 'Os produtos do seu carrinho não são elegíveis para desconto com este cupom.'
+          });
+        }
+      }
+    }
+
+    // 9. Cálculo do Desconto
+    let rawDiscount = 0;
+    if (coupon.discount_type === 'percentage') {
+      rawDiscount = (orderSubtotal * Number(coupon.discount_value)) / 100;
+      if (coupon.max_discount_value && rawDiscount > Number(coupon.max_discount_value)) {
+        rawDiscount = Number(coupon.max_discount_value);
+      }
+    } else {
+      rawDiscount = Math.min(Number(coupon.discount_value), orderSubtotal);
+    }
+
+    const finalDiscount = Number(rawDiscount.toFixed(2));
+
+    return res.json({
+      valid: true,
+      code: coupon.code,
+      discount: finalDiscount,
+      discount_type: coupon.discount_type,
+      discount_value: coupon.discount_value,
+      description: coupon.description,
+      message: `Cupom ${coupon.code} aplicado com sucesso! Desconto de R$ ${finalDiscount.toFixed(2).replace('.', ',')}`
+    });
+  } catch (err) {
+    console.error('[COUPON VALIDATE ERROR]', err);
+    res.status(500).json({ valid: false, message: 'Erro ao validar cupom: ' + err.message });
+  }
 });
 
 // ----------------------------------------------------

@@ -50,11 +50,28 @@ export const api = {
   updatePaymentStatus: (id, payment_status) => request(`/orders/${id}/payment`, { method: 'PATCH', body: JSON.stringify({ payment_status }) }),
   createManualOrder: (orderData) => request('/orders/manual', { method: 'POST', body: JSON.stringify(orderData) }),
 
-  // Products
+  // Products & Menu Manager
   getProducts: (businessId) => request(`/products${businessId ? `?business_id=${businessId}` : ''}`),
   createProduct: (data) => request('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id, data) => request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProduct: (id) => request(`/products/${id}`, { method: 'DELETE' }),
+
+  // Categories
+  getCategories: (businessId) => request(`/categories${businessId ? `?business_id=${businessId}` : ''}`),
+  createCategory: (data) => request('/categories', { method: 'POST', body: JSON.stringify(data) }),
+  updateCategory: (id, data) => request(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCategory: (id) => request(`/categories/${id}`, { method: 'DELETE' }),
+
+  // One-click Reset Official Burger Menu
+  resetBurguerMenu: () => request('/menu/reset-burguer', { method: 'POST' }),
+
+  // Coupons (Sistema 100% Personalizável)
+  getCoupons: () => request('/coupons'),
+  createCoupon: (data) => request('/coupons', { method: 'POST', body: JSON.stringify(data) }),
+  updateCoupon: (id, data) => request(`/coupons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCoupon: (id) => request(`/coupons/${id}`, { method: 'DELETE' }),
+  toggleCoupon: (id) => request(`/coupons/${id}/toggle`, { method: 'POST' }),
+  validateCoupon: (payload) => request('/public/coupons/validate', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Ingredients
   getIngredients: (businessId) => request(`/ingredients${businessId ? `?business_id=${businessId}` : ''}`),

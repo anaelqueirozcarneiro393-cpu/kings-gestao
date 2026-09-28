@@ -18,6 +18,8 @@ import { CustomersPage } from './pages/admin/CustomersPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
 import { FinancePage } from './pages/admin/FinancePage';
 import { SettingsPage } from './pages/admin/SettingsPage';
+import { MenuManagerPage } from './pages/admin/MenuManagerPage';
+import { CouponsPage } from './pages/admin/CouponsPage';
 
 export function App() {
   const { isAuthenticated, loading } = useAuth();
@@ -133,6 +135,14 @@ export function App() {
 
       {adminRoute === 'cash' && (
         <CashRegisterPage />
+      )}
+
+      {adminRoute === 'menu_manager' && (
+        <MenuManagerPage selectedBusinessId={selectedBusinessId} />
+      )}
+
+      {adminRoute === 'coupons' && (
+        <CouponsPage selectedBusinessId={selectedBusinessId} />
       )}
 
       {adminRoute === 'products' && (

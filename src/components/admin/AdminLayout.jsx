@@ -19,7 +19,8 @@ import {
   Plus,
   Bell,
   BellOff,
-  Clock
+  Clock,
+  Ticket
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
@@ -89,7 +90,8 @@ export function AdminLayout({
     { id: 'orders', label: 'Pedidos & PDV', icon: ShoppingBag, badge: newOrdersCount > 0 ? newOrdersCount : null },
     { id: 'kds', label: 'Cozinha (KDS)', icon: ChefHat },
     { id: 'cash', label: 'Frente de Caixa', icon: Wallet },
-    { id: 'products', label: 'Produtos', icon: UtensilsCrossed },
+    { id: 'menu_manager', label: 'Gestor de Cardápio', icon: UtensilsCrossed },
+    { id: 'coupons', label: 'Cupons de Desconto', icon: Ticket },
     { id: 'recipes', label: 'Fichas Técnicas', icon: FlaskConical },
     { id: 'cmv', label: 'CMV & Margens', icon: TrendingUp },
     { id: 'stock', label: 'Estoque & Insumos', icon: Package },

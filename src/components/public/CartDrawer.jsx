@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Copy, Check, MapPin, Sparkles } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Copy, Check, MapPin, Sparkles, Ticket } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
@@ -15,7 +15,10 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
     deliveryType,
     setDeliveryType,
     deliveryFee,
-    setDeliveryFee
+    setDeliveryFee,
+    coupon,
+    setCoupon,
+    discount
   } = useCart();
 
   const [step, setStep] = useState('cart'); // 'cart' or 'checkout'
@@ -29,6 +32,41 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
   const [loading, setLoading] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
   const [deliveryZones, setDeliveryZones] = useState([]);
+
+  // Coupon State
+  const [couponInput, setCouponInput] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponMessage, setCouponMessage] = useState(null); // { text, isError }
+
+  const handleApplyCoupon = async (e) => {
+    if (e) e.preventDefault();
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponMessage(null);
+
+    try {
+      const res = await api.validateCoupon({
+        code: couponInput.trim(),
+        subtotal: cartSubtotal,
+        business_id: items[0]?.business_id,
+        delivery_type: deliveryType,
+        customer_phone: customerPhone,
+        items
+      });
+      setCoupon(res);
+      setCouponInput('');
+      setCouponMessage({ text: res.message, isError: false });
+    } catch (err) {
+      setCouponMessage({ text: err.message || 'Cupom inválido ou não aplicável', isError: true });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCoupon(null);
+    setCouponMessage(null);
+  };
 
   // Auto-fill from localStorage on mount
   useEffect(() => {
@@ -104,6 +142,8 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
         delivery_address: deliveryAddress,
         delivery_neighborhood: deliveryNeighborhood,
         delivery_fee: deliveryType === 'delivery' ? deliveryFee : 0,
+        discount: discount,
+        coupon_code: coupon ? coupon.code : null,
         notes: orderNotes,
         payment_method: paymentMethod,
         payment_change: Number(paymentChange) || 0,
@@ -399,6 +439,66 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
           {/* Footer com Totais e Botão Avançar / Confirmar */}
           {items.length > 0 && (
             <div className="p-5 border-t border-slate-800 bg-slate-950 space-y-3">
+              {/* Cupom de Desconto */}
+              <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                {coupon ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 rounded-md bg-emerald-500/10 text-emerald-400">
+                        <Ticket className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-black text-emerald-400 font-mono tracking-wider">
+                          {coupon.code}
+                        </div>
+                        <div className="text-[10px] text-slate-400">{coupon.description || 'Desconto ativo'}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-emerald-400 font-mono">
+                        -{formatCurrency(discount)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        className="p-1 hover:text-rose-400 text-slate-500 cursor-pointer"
+                        title="Remover cupom"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex gap-1.5">
+                      <div className="relative flex-1">
+                        <Ticket className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-500" />
+                        <input
+                          type="text"
+                          placeholder="Cupom de desconto"
+                          value={couponInput}
+                          onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                          className="w-full pl-8 pr-2 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 uppercase font-mono"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading || !couponInput.trim()}
+                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        {couponLoading ? '...' : 'Aplicar'}
+                      </button>
+                    </div>
+                    {couponMessage && (
+                      <p className={`text-[10px] mt-1.5 ${couponMessage.isError ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        {couponMessage.text}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between text-slate-400">
                   <span>Subtotal:</span>
@@ -408,6 +508,12 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
                   <div className="flex justify-between text-slate-400">
                     <span>Taxa de Entrega ({deliveryNeighborhood || 'Bairro'}):</span>
                     <span className="font-mono text-slate-200">{formatCurrency(deliveryFee)}</span>
+                  </div>
+                )}
+                {discount > 0 && (
+                  <div className="flex justify-between text-emerald-400 font-bold">
+                    <span>Desconto ({coupon?.code}):</span>
+                    <span className="font-mono">-{formatCurrency(discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-sm text-slate-100 pt-1 border-t border-slate-800/80">

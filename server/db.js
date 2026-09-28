@@ -120,10 +120,68 @@ const db = {
 };
 
 function initSchema() {
-  if (sqliteDb) {
-    // schema local SQLite se necessário
+  try {
+    if (isPostgres && pool) {
+      pool.query(`
+        CREATE TABLE IF NOT EXISTS coupons (
+          id SERIAL PRIMARY KEY,
+          code VARCHAR(50) UNIQUE NOT NULL,
+          description TEXT,
+          discount_type VARCHAR(20) NOT NULL DEFAULT 'percentage',
+          discount_value NUMERIC(10,2) NOT NULL,
+          min_order_value NUMERIC(10,2) DEFAULT 0.00,
+          max_discount_value NUMERIC(10,2),
+          usage_limit INTEGER,
+          used_count INTEGER DEFAULT 0,
+          starts_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMPTZ,
+          active INTEGER DEFAULT 1,
+          business_id INTEGER,
+          delivery_type VARCHAR(30) DEFAULT 'all',
+          only_first_order INTEGER DEFAULT 0,
+          included_product_ids TEXT,
+          excluded_product_ids TEXT,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+        ALTER TABLE coupons DISABLE ROW LEVEL SECURITY;
+        ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(50);
+      `).catch(err => console.warn('[DB SCHEMA INIT PG]', err.message));
+    } else if (sqliteDb) {
+      sqliteDb.exec(`
+        CREATE TABLE IF NOT EXISTS coupons (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT UNIQUE NOT NULL,
+          description TEXT,
+          discount_type TEXT NOT NULL DEFAULT 'percentage',
+          discount_value REAL NOT NULL,
+          min_order_value REAL DEFAULT 0.00,
+          max_discount_value REAL,
+          usage_limit INTEGER,
+          used_count INTEGER DEFAULT 0,
+          starts_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          expires_at TEXT,
+          active INTEGER DEFAULT 1,
+          business_id INTEGER,
+          delivery_type TEXT DEFAULT 'all',
+          only_first_order INTEGER DEFAULT 0,
+          included_product_ids TEXT,
+          excluded_product_ids TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      try {
+        sqliteDb.exec(`ALTER TABLE orders ADD COLUMN coupon_code TEXT;`);
+      } catch (e) {
+        // Coluna já existe
+      }
+    }
+  } catch (err) {
+    console.warn('[DB INIT SCHEMA]', err.message);
   }
 }
+
+// Inicializa schema automaticamente
+initSchema();
 
 module.exports = {
   db,
