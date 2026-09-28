@@ -26,6 +26,10 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
+  // System Status & Database Diagnostics
+  getStatus: () => request('/status'),
+  syncDatabase: () => request('/admin/sync-database', { method: 'POST' }),
+
   // Auth
   login: (pin) => request('/auth/login', { method: 'POST', body: JSON.stringify({ pin }) }),
   checkAuth: () => request('/auth/check'),

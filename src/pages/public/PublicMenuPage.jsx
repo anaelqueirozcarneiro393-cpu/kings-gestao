@@ -62,11 +62,11 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
   const isOpen = currentBusiness?.is_open;
 
   // Filter categories and products for the selected business
-  const businessCategories = data?.categories?.filter(c => c.business_id === currentBusiness?.id) || [];
-  const businessProducts = data?.products?.filter(p => p.business_id === currentBusiness?.id) || [];
+  const businessCategories = data?.categories?.filter(c => Number(c.business_id) === Number(currentBusiness?.id)) || [];
+  const businessProducts = data?.products?.filter(p => Number(p.business_id) === Number(currentBusiness?.id)) || [];
 
   const filteredProducts = selectedCategory
-    ? businessProducts.filter(p => p.category_id === selectedCategory)
+    ? businessProducts.filter(p => Number(p.category_id) === Number(selectedCategory))
     : businessProducts;
 
   return (

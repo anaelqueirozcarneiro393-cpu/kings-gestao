@@ -452,11 +452,25 @@ async function initSchema() {
           ('whatsapp_notification_phone', '5511999999999'),
           ('default_delivery_fee', '5.00')
         ON CONFLICT (key) DO NOTHING;
-
-        -- Ajustar sequences para que auto-increment não tente usar IDs manuais já inseridos
-        SELECT setval('products_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 200) FROM products));
-        SELECT setval('categories_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 50) FROM categories));
       `);
+
+      // Ajustar sequences com segurança (não quebra se o nome da sequence for ligeiramente diferente)
+      try {
+        await pool.query(`
+          DO $$
+          BEGIN
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'products_id_seq') THEN
+              PERFORM setval('products_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 200) FROM products));
+            END IF;
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'categories_id_seq') THEN
+              PERFORM setval('categories_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 50) FROM categories));
+            END IF;
+          END $$;
+        `);
+      } catch (seqErr) {
+        console.warn('[DB SEQ WARN]', seqErr.message);
+      }
+
       console.log('[DB] Schema e dados oficiais sincronizados com sucesso.');
     } else if (sqliteDb) {
       sqliteDb.exec(`
@@ -512,10 +526,36 @@ async function initSchema() {
   }
 }
 
+// Função para diagnóstico e verificação do status da conexão com o banco
+async function checkDatabaseConnection() {
+  if (isPostgres && pool) {
+    try {
+      const res = await pool.query('SELECT 1 as ping');
+      return { connected: true, type: 'postgresql', ping: res.rows[0]?.ping || 1 };
+    } catch (err) {
+      return { connected: false, type: 'postgresql', error: err.message };
+    }
+  } else if (sqliteDb) {
+    try {
+      const res = sqliteDb.prepare('SELECT 1 as ping').get();
+      return { connected: true, type: 'sqlite', ping: res.ping };
+    } catch (err) {
+      return { connected: false, type: 'sqlite', error: err.message };
+    }
+  }
+  return {
+    connected: false,
+    type: 'none',
+    error: 'Nenhuma conexão ativa. Variável DATABASE_URL não configurada no ambiente e SQLite local indisponível.'
+  };
+}
+
 // Inicializa schema automaticamente
 initSchema();
 
 module.exports = {
   db,
-  initSchema
+  initSchema,
+  checkDatabaseConnection,
+  isPostgres
 };
