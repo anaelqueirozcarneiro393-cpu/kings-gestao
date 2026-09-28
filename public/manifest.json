@@ -1,0 +1,17 @@
+{
+  "name": "KING'S Gestão & Delivery",
+  "short_name": "KING'S",
+  "description": "Sistema Integrado de Gestão e Operação KING'S (Açaí, Burguer & Pizza)",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f17",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
