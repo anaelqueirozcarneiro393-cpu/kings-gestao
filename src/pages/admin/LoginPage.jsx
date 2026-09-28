@@ -16,7 +16,7 @@ export function LoginPage({ onBackToMenu }) {
     try {
       const success = await login(pin);
       if (!success) {
-        setError('PIN incorreto. O PIN padrão é 1234.');
+        setError('Senha de acesso incorreta.');
       }
     } catch (err) {
       setError(err.message || 'Erro ao realizar login.');
@@ -44,7 +44,7 @@ export function LoginPage({ onBackToMenu }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                PIN de Segurança
+                Senha Master de Segurança
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
@@ -52,7 +52,7 @@ export function LoginPage({ onBackToMenu }) {
                   type="password"
                   required
                   autoFocus
-                  placeholder="Digite seu PIN (padrão: 1234)"
+                  placeholder="Digite sua senha de acesso"
                   value={pin}
                   onChange={e => setPin(e.target.value)}
                   className="w-full pl-10 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 font-mono tracking-widest"

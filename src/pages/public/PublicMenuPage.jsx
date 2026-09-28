@@ -88,13 +88,6 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={onNavigateAdmin}
-              className="text-[11px] text-slate-400 hover:text-amber-300 px-2.5 py-1 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors"
-            >
-              Acesso Proprietário
-            </button>
-
-            <button
               onClick={() => setIsCartOpen(true)}
               className="relative flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs shadow-md shadow-amber-500/20 transition-all cursor-pointer"
             >

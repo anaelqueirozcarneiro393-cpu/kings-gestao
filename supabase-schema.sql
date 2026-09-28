@@ -376,7 +376,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Configurações Gerais
 INSERT INTO settings (key, value) VALUES
   ('brand_name', 'KING''S'),
-  ('admin_pin', '1234'),
+  ('admin_pin', '#Kai-24xz'),
   ('default_delivery_fee', '5.00'),
   ('card_fee_debit', '1.50'),
   ('card_fee_credit', '3.20'),

@@ -1,13 +1,53 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const { db, initSchema } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for rate limiters behind Vercel edge reverse proxies
+app.set('trust proxy', 1);
+
+// HTTP Security Headers (Anti-XSS, MIME-sniffing, Clickjacking)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+
+// Proteção contra payload excessivo (Memory Exhaustion / ReDoS)
+app.use(express.json({ limit: '500kb' }));
 app.use(cors());
-app.use(express.json());
+
+// Rate Limiter Geral contra DDoS e Flooding
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 600, // limite de 600 requisições por IP a cada 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas requisições originadas deste IP. Aguarde alguns instantes.' }
+});
+app.use('/api/', apiLimiter);
+
+// Rate Limiter Estrito para Autenticação (Anti Brute-Force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // máximo de 10 tentativas a cada 15 minutos por IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Excesso de tentativas incorretas. Por segurança, aguarde 15 minutos.' }
+});
+
+// Rate Limiter para Criação de Pedidos (Anti Spam / Flood)
+const orderLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Limite de pedidos atingido temporariamente. Aguarde alguns minutos.' }
+});
 
 // Helper function to check if a business is currently open based on hours & manual toggle
 function isBusinessOpen(business) {
@@ -51,9 +91,15 @@ function getProductUnitCost(productId) {
 // ----------------------------------------------------
 // 1. AUTH ROUTES
 // ----------------------------------------------------
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   const { pin } = req.body;
-  let validPin = '1234';
+
+  // Validação estrita de tipo e tamanho para evitar injeções ou payloads anormais
+  if (!pin || typeof pin !== 'string' || pin.length > 64) {
+    return res.status(400).json({ error: 'Credenciais inválidas.' });
+  }
+
+  let validPin = '#Kai-24xz';
 
   try {
     if (db && typeof db.prepare === 'function') {
@@ -63,10 +109,11 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
   } catch (err) {
-    console.warn('[AUTH] Erro ao buscar PIN no banco, usando padrao 1234:', err.message);
+    console.warn('[AUTH] Usando senha master configurada.');
   }
 
-  if (pin === validPin || pin === 'admin' || pin === '1234') {
+  // Aceita estritamente a nova senha forte configurada
+  if (pin === validPin || pin === '#Kai-24xz') {
     return res.json({
       success: true,
       token: 'kings_authenticated_session_token_' + Date.now(),
@@ -77,7 +124,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
   }
 
-  return res.status(401).json({ error: 'PIN de acesso incorreto. O padrão é 1234.' });
+  return res.status(401).json({ error: 'Senha de acesso incorreta.' });
 });
 
 app.get('/api/auth/check', (req, res) => {
@@ -352,7 +399,7 @@ function revertStockForOrder(orderId) {
 }
 
 // Customer or manual order creation
-app.post(['/api/public/orders', '/api/orders/manual'], (req, res) => {
+app.post(['/api/public/orders', '/api/orders/manual'], orderLimiter, (req, res) => {
   const {
     customer_name,
     customer_phone,
