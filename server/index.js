@@ -886,103 +886,70 @@ app.patch('/api/orders/:id/payment', async (req, res) => {
 });
 
 // ----------------------------------------------------
-// 5. PRODUCTS & CATEGORIES CRUD (COM PERSISTÊNCIA DIRETA)
+// 5. PRODUCTS & CATEGORIES CRUD (COM PERSISTÊNCIA DUAL: DB + MEMÓRIA)
 // ----------------------------------------------------
 
-let isSeedingDatabase = false;
-async function ensureDatabaseSeeded() {
-  if (isSeedingDatabase) return;
-  try {
-    isSeedingDatabase = true;
-    const check = await db.prepare("SELECT value FROM settings WHERE key = 'database_seeded'").get();
-    if (check && check.value === '1') {
-      return;
-    }
+let memoryCategories = [
+  { id: 1, business_id: 1, name: 'Açaí no Copo', order_index: 1, active: 1 },
+  { id: 2, business_id: 1, name: 'Barcas & Roletas', order_index: 2, active: 1 },
+  { id: 10, business_id: 2, name: 'Destaque & Combos', order_index: 1, active: 1 },
+  { id: 11, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 2, active: 1 },
+  { id: 12, business_id: 2, name: 'Acompanhamentos', order_index: 3, active: 1 },
+  { id: 13, business_id: 2, name: 'Bebidas', order_index: 4, active: 1 }
+];
 
-    // 1. Sincroniza Categorias Oficiais (garante que IDs 1, 2, 10, 11, 12, 13 existam antes dos produtos)
-    const categories = [
-      { id: 1, business_id: 1, name: 'Açaí no Copo', order_index: 1, active: 1 },
-      { id: 2, business_id: 1, name: 'Barcas & Roletas', order_index: 2, active: 1 },
-      { id: 10, business_id: 2, name: 'Destaque & Combos', order_index: 1, active: 1 },
-      { id: 11, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 2, active: 1 },
-      { id: 12, business_id: 2, name: 'Acompanhamentos', order_index: 3, active: 1 },
-      { id: 13, business_id: 2, name: 'Bebidas', order_index: 4, active: 1 }
-    ];
-    for (const c of categories) {
-      try {
-        await db.prepare('INSERT INTO categories (id, business_id, name, order_index, active) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING').run(
-          c.id, c.business_id, c.name, c.order_index, c.active
-        );
-      } catch (e) {}
-    }
-
-    // 2. Sincroniza Produtos Oficiais se a operação 2 ainda não tiver produtos cadastrados
-    const burguerCount = await db.prepare('SELECT count(*) as c FROM products WHERE business_id = 2').get();
-    if (!burguerCount || Number(burguerCount.c) === 0) {
-      const products = [
-        { id: 101, business_id: 2, category_id: 10, name: "2 King's Classic + Coca 350ml", description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml", image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', price: 36.90, active: 1, availability: 1, order_index: 1 },
-        { id: 102, business_id: 2, category_id: 10, name: 'Combo Double Bacon', description: 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', price: 39.90, active: 1, availability: 1, order_index: 2 },
-        { id: 103, business_id: 2, category_id: 11, name: 'Kings Double Bacon', description: 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', price: 32.90, active: 1, availability: 1, order_index: 1 },
-        { id: 104, business_id: 2, category_id: 11, name: 'Kings Classic', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', price: 19.90, active: 1, availability: 1, order_index: 2 },
-        { id: 105, business_id: 2, category_id: 11, name: 'Kings Egg Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', price: 27.90, active: 1, availability: 1, order_index: 3 },
-        { id: 106, business_id: 2, category_id: 11, name: 'Kings Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', price: 24.90, active: 1, availability: 1, order_index: 4 },
-        { id: 107, business_id: 2, category_id: 12, name: 'Batata Frita 150g', description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', price: 12.90, active: 1, availability: 1, order_index: 1 },
-        { id: 108, business_id: 2, category_id: 12, name: 'Batata Frita 200g+ Cheddar e Bacon Crocante', description: '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', price: 17.90, active: 1, availability: 1, order_index: 2 },
-        { id: 109, business_id: 2, category_id: 13, name: 'Coca-Cola 350ml', description: 'Lata 350ml estupidamente gelada.', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', price: 6.00, active: 1, availability: 1, order_index: 1 }
-      ];
-
-      for (const p of products) {
-        try {
-          await db.prepare(`
-            INSERT INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT (id) DO NOTHING
-          `).run(p.id, p.business_id, p.category_id, p.name, p.description, p.image_url, p.price, p.active, p.availability, p.order_index);
-        } catch (e) {}
-      }
-    }
-
-    try {
-      await db.prepare("INSERT INTO settings (key, value) VALUES ('database_seeded', '1') ON CONFLICT (key) DO UPDATE SET value = '1'").run();
-    } catch (e) {}
-  } catch (err) {
-    console.warn('[ENSURE DATABASE SEEDED]', err.message);
-  } finally {
-    isSeedingDatabase = false;
-  }
-}
+let memoryProducts = [
+  { id: 1, business_id: 1, category_id: 1, category_name: 'Açaí no Copo', business_name: "KING'S AÇAÍ", name: 'Açaí no Copo 300ml', description: 'Copo de 300ml montado com nosso açaí cremoso batido na hora com xarope natural.', image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', price: 16.90, active: 1, availability: 1, order_index: 1 },
+  { id: 2, business_id: 1, category_id: 1, category_name: 'Açaí no Copo', business_name: "KING'S AÇAÍ", name: 'Açaí no Copo 500ml', description: 'O clássico mais pedido! 500ml de puro açaí cremoso com camadas generosas de complementos.', image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', price: 22.90, active: 1, availability: 1, order_index: 2 },
+  { id: 101, business_id: 2, category_id: 10, category_name: 'Destaque & Combos', business_name: "KING'S BURGUER", name: "2 King's Classic + Coca 350ml", description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml", image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', price: 36.90, active: 1, availability: 1, order_index: 1 },
+  { id: 102, business_id: 2, category_id: 10, category_name: 'Destaque & Combos', business_name: "KING'S BURGUER", name: 'Combo Double Bacon', description: 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', price: 39.90, active: 1, availability: 1, order_index: 2 },
+  { id: 103, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Double Bacon', description: 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', price: 32.90, active: 1, availability: 1, order_index: 1 },
+  { id: 104, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Classic', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', price: 19.90, active: 1, availability: 1, order_index: 2 },
+  { id: 105, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Egg Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', price: 27.90, active: 1, availability: 1, order_index: 3 },
+  { id: 106, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', price: 24.90, active: 1, availability: 1, order_index: 4 },
+  { id: 107, business_id: 2, category_id: 12, category_name: 'Acompanhamentos', business_name: "KING'S BURGUER", name: 'Batata Frita 150g', description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', price: 12.90, active: 1, availability: 1, order_index: 1 },
+  { id: 108, business_id: 2, category_id: 12, category_name: 'Acompanhamentos', business_name: "KING'S BURGUER", name: 'Batata Frita 200g+ Cheddar e Bacon Crocante', description: '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', price: 17.90, active: 1, availability: 1, order_index: 2 },
+  { id: 109, business_id: 2, category_id: 13, category_name: 'Bebidas', business_name: "KING'S BURGUER", name: 'Coca-Cola 350ml', description: 'Lata 350ml estupidamente gelada.', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', price: 6.00, active: 1, availability: 1, order_index: 1 }
+];
 
 app.get('/api/products', async (req, res) => {
   try {
-    await ensureDatabaseSeeded();
     const { business_id } = req.query;
-    let query = `
-      SELECT p.*, b.name as business_name, c.name as category_name
-      FROM products p
-      JOIN businesses b ON p.business_id = b.id
-      LEFT JOIN categories c ON p.category_id = c.id
-    `;
-    const params = [];
+    let list = [];
 
-    if (business_id) {
-      query += ' WHERE p.business_id = ?';
-      params.push(business_id);
-    }
-
-    query += ' ORDER BY p.business_id ASC, p.order_index ASC, p.name ASC';
-
-    let products = [];
     try {
-      products = await db.prepare(query).all(...params);
+      let query = `
+        SELECT p.*, b.name as business_name, c.name as category_name
+        FROM products p
+        LEFT JOIN businesses b ON p.business_id = b.id
+        LEFT JOIN categories c ON p.category_id = c.id
+      `;
+      const params = [];
+
+      if (business_id) {
+        query += ' WHERE p.business_id = ?';
+        params.push(Number(business_id));
+      }
+
+      query += ' ORDER BY p.business_id ASC, p.order_index ASC, p.name ASC';
+      const rows = await db.prepare(query).all(...params);
+      if (Array.isArray(rows) && rows.length > 0) {
+        list = rows;
+      }
     } catch (queryErr) {
-      console.warn('[PRODUCTS QUERY FAILED]', queryErr.message);
+      console.warn('[PRODUCTS QUERY FAILED, USING IN-MEMORY STORE]', queryErr.message);
     }
 
-    let list = Array.isArray(products) ? products : [];
+    if (list.length === 0) {
+      list = business_id
+        ? memoryProducts.filter(p => Number(p.business_id) === Number(business_id))
+        : memoryProducts;
+    }
 
     // Calculate live unit cost, CMV R$, and CMV % for each product
     const enriched = await Promise.all(list.map(async (prod) => {
-      const cost = await getProductUnitCost(prod.id);
+      let cost = 0;
+      try { cost = await getProductUnitCost(prod.id); } catch(e) {}
       const cmvReais = cost;
       const cmvPercent = prod.price > 0 ? (cost / prod.price) * 100 : 0;
       const grossProfit = prod.price - cost;
@@ -1001,7 +968,7 @@ app.get('/api/products', async (req, res) => {
     res.json(enriched);
   } catch (err) {
     console.error('[API PRODUCTS ERROR]', err);
-    res.json([]);
+    res.json(req.query.business_id ? memoryProducts.filter(p => Number(p.business_id) === Number(req.query.business_id)) : memoryProducts);
   }
 });
 
@@ -1012,25 +979,48 @@ app.post('/api/products', async (req, res) => {
       return res.status(400).json({ error: 'Operação, nome e preço são obrigatórios' });
     }
 
-    const insert = db.prepare(`
-      INSERT INTO products (business_id, category_id, name, description, image_url, price, active, availability, order_index)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const info = await insert.run(
-      business_id,
-      category_id || null,
+    const newId = Date.now();
+    const newProduct = {
+      id: newId,
+      business_id: Number(business_id),
+      category_id: category_id ? Number(category_id) : null,
       name,
-      description || '',
-      image_url || '',
-      Number(price),
-      active !== undefined ? active : 1,
-      availability !== undefined ? availability : 1,
-      order_index || 0
-    );
+      description: description || '',
+      image_url: image_url || '',
+      price: Number(price),
+      active: active !== undefined ? Number(active) : 1,
+      availability: availability !== undefined ? Number(availability) : 1,
+      order_index: order_index !== undefined ? Number(order_index) : 1
+    };
 
-    const product = await db.prepare('SELECT * FROM products WHERE id = ?').get(info.lastInsertRowid);
-    res.status(201).json(product);
+    memoryProducts.push(newProduct);
+
+    try {
+      const insert = db.prepare(`
+        INSERT INTO products (business_id, category_id, name, description, image_url, price, active, availability, order_index)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const info = await insert.run(
+        newProduct.business_id,
+        newProduct.category_id,
+        newProduct.name,
+        newProduct.description,
+        newProduct.image_url,
+        newProduct.price,
+        newProduct.active,
+        newProduct.availability,
+        newProduct.order_index
+      );
+
+      if (info && info.lastInsertRowid) {
+        newProduct.id = info.lastInsertRowid;
+      }
+    } catch (dbErr) {
+      console.warn('[POST PRODUCT DB WARN]', dbErr.message);
+    }
+
+    res.status(201).json(newProduct);
   } catch (err) {
     console.error('[POST PRODUCT ERROR]', err);
     res.status(500).json({ error: 'Erro ao criar produto: ' + err.message });
@@ -1040,57 +1030,81 @@ app.post('/api/products', async (req, res) => {
 app.put('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const numId = Number(id);
     const { business_id, category_id, name, description, image_url, price, active, availability, order_index } = req.body;
 
-    // Verificar se o produto já existe no banco
-    let current = await db.prepare('SELECT * FROM products WHERE id = ?').get(id);
-
-    if (!current) {
-      // Se ainda não existir no banco, insere diretamente com o ID correspondente
-      await db.prepare(`
-        INSERT INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        id,
-        business_id || 2,
-        category_id ? Number(category_id) : null,
-        name || 'Produto',
-        description || '',
-        image_url || '',
-        price !== undefined ? Number(price) : 0,
-        active !== undefined ? active : 1,
-        availability !== undefined ? availability : 1,
-        order_index !== undefined ? Number(order_index) : 1
-      );
-    } else {
-      const newCategoryId = category_id !== undefined ? (category_id ? Number(category_id) : null) : current.category_id;
-      const newName = name !== undefined ? name : current.name;
-      const newDescription = description !== undefined ? description : current.description;
-      const newImageUrl = image_url !== undefined ? image_url : current.image_url;
-      const newPrice = price !== undefined ? Number(price) : current.price;
-      const newActive = active !== undefined ? active : current.active;
-      const newAvailability = availability !== undefined ? availability : current.availability;
-      const newOrderIndex = order_index !== undefined ? Number(order_index) : current.order_index;
-
-      await db.prepare(`
-        UPDATE products SET
-          category_id = ?,
-          name = ?,
-          description = ?,
-          image_url = ?,
-          price = ?,
-          active = ?,
-          availability = ?,
-          order_index = ?
-        WHERE id = ?
-      `).run(
-        newCategoryId, newName, newDescription, newImageUrl,
-        newPrice, newActive, newAvailability, newOrderIndex, id
-      );
+    // 1. Atualizar no memoryProducts
+    const memIndex = memoryProducts.findIndex(p => Number(p.id) === numId);
+    let updatedMem = null;
+    if (memIndex >= 0) {
+      memoryProducts[memIndex] = {
+        ...memoryProducts[memIndex],
+        ...(business_id !== undefined ? { business_id: Number(business_id) } : {}),
+        ...(category_id !== undefined ? { category_id: category_id ? Number(category_id) : null } : {}),
+        ...(name !== undefined ? { name } : {}),
+        ...(description !== undefined ? { description } : {}),
+        ...(image_url !== undefined ? { image_url } : {}),
+        ...(price !== undefined ? { price: Number(price) } : {}),
+        ...(active !== undefined ? { active: Number(active) } : {}),
+        ...(availability !== undefined ? { availability: Number(availability) } : {}),
+        ...(order_index !== undefined ? { order_index: Number(order_index) } : {})
+      };
+      updatedMem = memoryProducts[memIndex];
     }
 
-    const updated = await db.prepare('SELECT * FROM products WHERE id = ?').get(id);
-    res.json(updated);
+    // 2. Atualizar no Banco de Dados
+    try {
+      let current = await db.prepare('SELECT * FROM products WHERE id = ?').get(numId);
+
+      if (!current) {
+        await db.prepare(`
+          INSERT INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          numId,
+          business_id ? Number(business_id) : (updatedMem?.business_id || 2),
+          category_id ? Number(category_id) : (updatedMem?.category_id || null),
+          name || updatedMem?.name || 'Produto',
+          description !== undefined ? description : (updatedMem?.description || ''),
+          image_url !== undefined ? image_url : (updatedMem?.image_url || ''),
+          price !== undefined ? Number(price) : (updatedMem?.price || 0),
+          active !== undefined ? Number(active) : 1,
+          availability !== undefined ? Number(availability) : 1,
+          order_index !== undefined ? Number(order_index) : 1
+        );
+      } else {
+        const newCategoryId = category_id !== undefined ? (category_id ? Number(category_id) : null) : current.category_id;
+        const newName = name !== undefined ? name : current.name;
+        const newDescription = description !== undefined ? description : current.description;
+        const newImageUrl = image_url !== undefined ? image_url : current.image_url;
+        const newPrice = price !== undefined ? Number(price) : current.price;
+        const newActive = active !== undefined ? Number(active) : current.active;
+        const newAvailability = availability !== undefined ? Number(availability) : current.availability;
+        const newOrderIndex = order_index !== undefined ? Number(order_index) : current.order_index;
+
+        await db.prepare(`
+          UPDATE products SET
+            category_id = ?,
+            name = ?,
+            description = ?,
+            image_url = ?,
+            price = ?,
+            active = ?,
+            availability = ?,
+            order_index = ?
+          WHERE id = ?
+        `).run(
+          newCategoryId, newName, newDescription, newImageUrl,
+          newPrice, newActive, newAvailability, newOrderIndex, numId
+        );
+      }
+
+      const updated = await db.prepare('SELECT * FROM products WHERE id = ?').get(numId);
+      return res.json(updated || updatedMem);
+    } catch (dbErr) {
+      console.warn('[PUT PRODUCT DB WARN]', dbErr.message);
+      return res.json(updatedMem || { id: numId, name, price });
+    }
   } catch (err) {
     console.error('[PUT PRODUCT ERROR]', err);
     res.status(500).json({ error: 'Erro ao atualizar produto: ' + err.message });
@@ -1100,8 +1114,18 @@ app.put('/api/products/:id', async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await ensureDatabaseSeeded();
-    await db.prepare('DELETE FROM products WHERE id = ?').run(id);
+    const numId = Number(id);
+
+    // 1. Remove do memoryProducts
+    memoryProducts = memoryProducts.filter(p => Number(p.id) !== numId);
+
+    // 2. Remove do Banco
+    try {
+      await db.prepare('DELETE FROM products WHERE id = ?').run(numId);
+    } catch (dbErr) {
+      console.warn('[DELETE PRODUCT DB WARN]', dbErr.message);
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error('[DELETE PRODUCT ERROR]', err);
@@ -1114,26 +1138,35 @@ app.delete('/api/products/:id', async (req, res) => {
 // ----------------------------------------------------
 app.get('/api/categories', async (req, res) => {
   try {
-    await ensureDatabaseSeeded();
     const { business_id } = req.query;
-    let sql = 'SELECT * FROM categories';
-    const params = [];
-    if (business_id) {
-      sql += ' WHERE business_id = ?';
-      params.push(business_id);
-    }
-    sql += ' ORDER BY order_index ASC, id ASC';
-    let rows = [];
+    let list = [];
+
     try {
-      rows = await db.prepare(sql).all(...params);
+      let sql = 'SELECT * FROM categories';
+      const params = [];
+      if (business_id) {
+        sql += ' WHERE business_id = ?';
+        params.push(Number(business_id));
+      }
+      sql += ' ORDER BY order_index ASC, id ASC';
+      const rows = await db.prepare(sql).all(...params);
+      if (Array.isArray(rows) && rows.length > 0) {
+        list = rows;
+      }
     } catch (queryErr) {
-      console.warn('[CATEGORIES QUERY FAILED]', queryErr.message);
+      console.warn('[CATEGORIES QUERY FAILED, USING IN-MEMORY STORE]', queryErr.message);
     }
 
-    res.json(Array.isArray(rows) ? rows : []);
+    if (list.length === 0) {
+      list = business_id
+        ? memoryCategories.filter(c => Number(c.business_id) === Number(business_id))
+        : memoryCategories;
+    }
+
+    res.json(list);
   } catch (err) {
     console.error('[API CATEGORIES ERROR]', err);
-    res.json([]);
+    res.json(req.query.business_id ? memoryCategories.filter(c => Number(c.business_id) === Number(req.query.business_id)) : memoryCategories);
   }
 });
 
@@ -1144,10 +1177,28 @@ app.post('/api/categories', async (req, res) => {
       return res.status(400).json({ error: 'Operação e nome da categoria são obrigatórios' });
     }
 
-    const stmt = db.prepare('INSERT INTO categories (business_id, name, order_index, active) VALUES (?, ?, ?, ?)');
-    const info = await stmt.run(business_id, name, order_index || 1, active !== undefined ? active : 1);
-    const created = await db.prepare('SELECT * FROM categories WHERE id = ?').get(info.lastInsertRowid);
-    res.status(201).json(created);
+    const newId = Date.now();
+    const newCat = {
+      id: newId,
+      business_id: Number(business_id),
+      name,
+      order_index: order_index !== undefined ? Number(order_index) : 1,
+      active: active !== undefined ? Number(active) : 1
+    };
+
+    memoryCategories.push(newCat);
+
+    try {
+      const stmt = db.prepare('INSERT INTO categories (business_id, name, order_index, active) VALUES (?, ?, ?, ?)');
+      const info = await stmt.run(newCat.business_id, newCat.name, newCat.order_index, newCat.active);
+      if (info && info.lastInsertRowid) {
+        newCat.id = info.lastInsertRowid;
+      }
+    } catch (dbErr) {
+      console.warn('[POST CATEGORY DB WARN]', dbErr.message);
+    }
+
+    res.status(201).json(newCat);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1156,29 +1207,49 @@ app.post('/api/categories', async (req, res) => {
 app.put('/api/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const numId = Number(id);
     const { business_id, name, order_index, active } = req.body;
 
-    let current = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
-    if (!current) {
-      await db.prepare('INSERT INTO categories (id, business_id, name, order_index, active) VALUES (?, ?, ?, ?, ?)').run(
-        id, business_id || 2, name || 'Categoria', order_index !== undefined ? Number(order_index) : 1, active !== undefined ? active : 1
-      );
-    } else {
-      const newName = name !== undefined ? name : current.name;
-      const newOrderIndex = order_index !== undefined ? Number(order_index) : current.order_index;
-      const newActive = active !== undefined ? active : current.active;
-
-      await db.prepare(`
-        UPDATE categories SET
-          name = ?,
-          order_index = ?,
-          active = ?
-        WHERE id = ?
-      `).run(newName, newOrderIndex, newActive, id);
+    // 1. Atualizar em memória
+    const memIndex = memoryCategories.findIndex(c => Number(c.id) === numId);
+    let updatedMem = null;
+    if (memIndex >= 0) {
+      memoryCategories[memIndex] = {
+        ...memoryCategories[memIndex],
+        ...(name !== undefined ? { name } : {}),
+        ...(order_index !== undefined ? { order_index: Number(order_index) } : {}),
+        ...(active !== undefined ? { active: Number(active) } : {})
+      };
+      updatedMem = memoryCategories[memIndex];
     }
 
-    const updated = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
-    res.json(updated);
+    // 2. Atualizar no Banco
+    try {
+      let current = await db.prepare('SELECT * FROM categories WHERE id = ?').get(numId);
+      if (!current) {
+        await db.prepare('INSERT INTO categories (id, business_id, name, order_index, active) VALUES (?, ?, ?, ?, ?)').run(
+          numId, business_id || 2, name || 'Categoria', order_index !== undefined ? Number(order_index) : 1, active !== undefined ? active : 1
+        );
+      } else {
+        const newName = name !== undefined ? name : current.name;
+        const newOrderIndex = order_index !== undefined ? Number(order_index) : current.order_index;
+        const newActive = active !== undefined ? Number(active) : current.active;
+
+        await db.prepare(`
+          UPDATE categories SET
+            name = ?,
+            order_index = ?,
+            active = ?
+          WHERE id = ?
+        `).run(newName, newOrderIndex, newActive, numId);
+      }
+
+      const updated = await db.prepare('SELECT * FROM categories WHERE id = ?').get(numId);
+      return res.json(updated || updatedMem);
+    } catch (dbErr) {
+      console.warn('[PUT CATEGORY DB WARN]', dbErr.message);
+      return res.json(updatedMem || { id: numId, name });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1187,8 +1258,18 @@ app.put('/api/categories/:id', async (req, res) => {
 app.delete('/api/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await ensureDatabaseSeeded();
-    await db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+    const numId = Number(id);
+
+    // 1. Remove da memória
+    memoryCategories = memoryCategories.filter(c => Number(c.id) !== numId);
+
+    // 2. Remove do banco
+    try {
+      await db.prepare('DELETE FROM categories WHERE id = ?').run(numId);
+    } catch (dbErr) {
+      console.warn('[DELETE CATEGORY DB WARN]', dbErr.message);
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

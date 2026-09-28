@@ -316,7 +316,11 @@ export function MenuManagerPage({ selectedBusinessId }) {
 
       {/* Seletor de Operações */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {businesses.map(b => (
+        {(businesses && businesses.length > 0 ? businesses : [
+          { id: 1, name: "KING'S AÇAÍ", slug: 'acai', icon: '🍧' },
+          { id: 2, name: "KING'S BURGUER", slug: 'burguer', icon: '🍔' },
+          { id: 3, name: "KING'S PIZZA", slug: 'pizza', icon: '🍕' }
+        ]).map(b => (
           <button
             key={b.id}
             onClick={() => setActiveBizId(b.id)}
@@ -326,7 +330,7 @@ export function MenuManagerPage({ selectedBusinessId }) {
                 : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300 border-slate-800'
             }`}
           >
-            <span>{b.icon || '🍴'}</span>
+            <span>{b.icon || (b.slug === 'acai' ? '🍧' : b.slug === 'burguer' ? '🍔' : '🍕')}</span>
             <span>{b.name}</span>
           </button>
         ))}
