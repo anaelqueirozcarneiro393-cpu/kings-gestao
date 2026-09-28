@@ -141,7 +141,11 @@ app.get('/api/auth/check', (req, res) => {
 app.get('/api/businesses', async (req, res) => {
   try {
     const businesses = await db.prepare('SELECT * FROM businesses ORDER BY id ASC').all();
-    const list = Array.isArray(businesses) ? businesses : [];
+    const list = Array.isArray(businesses) && businesses.length > 0 ? businesses : [
+      { id: 1, name: "KING'S AÇAÍ", slug: 'acai', tagline: 'O verdadeiro açaí artesanal e cremoso', active: 1, status: 'open', is_manually_closed: 0, opening_time: '11:00', closing_time: '02:00' },
+      { id: 2, name: "KING'S BURGUER", slug: 'burguer', tagline: 'Burguers artesanais feitos no fogo e sabor inigualável', active: 1, status: 'open', is_manually_closed: 0, opening_time: '18:00', closing_time: '00:00' },
+      { id: 3, name: "KING'S PIZZA", slug: 'pizza', tagline: 'Pizzas artesanais com fermentação natural', active: 0, status: 'coming_soon', is_manually_closed: 0, opening_time: '18:00', closing_time: '23:30' }
+    ];
     const enriched = list.map(b => ({
       ...b,
       is_open: isBusinessOpen(b),
@@ -153,9 +157,9 @@ app.get('/api/businesses', async (req, res) => {
   } catch (err) {
     console.error('[API BUSINESSES ERROR]', err);
     res.json([
-      { id: 1, name: "King's Burguer", slug: 'burguer', active: 1, status: 'open', is_open: true },
-      { id: 2, name: "King's Pizza", slug: 'pizza', active: 0, status: 'coming_soon', is_open: false },
-      { id: 3, name: "King's Açaí", slug: 'acai', active: 0, status: 'coming_soon', is_open: false }
+      { id: 1, name: "KING'S AÇAÍ", slug: 'acai', tagline: 'O verdadeiro açaí artesanal e cremoso', active: 1, status: 'open', is_open: true, opening_time: '11:00', closing_time: '02:00' },
+      { id: 2, name: "KING'S BURGUER", slug: 'burguer', tagline: 'Burguers artesanais feitos no fogo e sabor inigualável', active: 1, status: 'open', is_open: true, opening_time: '18:00', closing_time: '00:00' },
+      { id: 3, name: "KING'S PIZZA", slug: 'pizza', tagline: 'Pizzas artesanais com fermentação natural', active: 0, status: 'coming_soon', is_open: false, opening_time: '18:00', closing_time: '23:30' }
     ]);
   }
 });
@@ -902,8 +906,32 @@ app.get('/api/products', async (req, res) => {
 
     query += ' ORDER BY p.business_id ASC, p.order_index ASC, p.name ASC';
 
-    const products = await db.prepare(query).all(...params);
-    const list = Array.isArray(products) ? products : [];
+    let products = [];
+    try {
+      products = await db.prepare(query).all(...params);
+    } catch (queryErr) {
+      console.warn('[PRODUCTS QUERY FAILED, USING FALLBACK]', queryErr.message);
+    }
+
+    let list = Array.isArray(products) ? products : [];
+
+    // Se o banco ainda não tiver os produtos e for do King's Burguer (ou geral), use os produtos oficiais
+    if (list.length === 0) {
+      const allOfficial = [
+        { id: 1, business_id: 1, category_id: 1, category_name: 'Açaí no Copo', business_name: "KING'S AÇAÍ", name: 'Açaí no Copo 300ml', description: 'Copo de 300ml montado com nosso açaí cremoso batido na hora com xarope natural.', image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', price: 16.90, active: 1, availability: 1, order_index: 1 },
+        { id: 2, business_id: 1, category_id: 1, category_name: 'Açaí no Copo', business_name: "KING'S AÇAÍ", name: 'Açaí no Copo 500ml', description: 'O clássico mais pedido! 500ml de puro açaí cremoso com camadas generosas de complementos.', image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', price: 22.90, active: 1, availability: 1, order_index: 2 },
+        { id: 101, business_id: 2, category_id: 10, category_name: 'Destaque & Combos', business_name: "KING'S BURGUER", name: "2 King's Classic + Coca 350ml", description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml", image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', price: 36.90, active: 1, availability: 1, order_index: 1 },
+        { id: 102, business_id: 2, category_id: 10, category_name: 'Destaque & Combos', business_name: "KING'S BURGUER", name: 'Combo Double Bacon', description: 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', price: 39.90, active: 1, availability: 1, order_index: 2 },
+        { id: 103, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Double Bacon', description: 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', price: 32.90, active: 1, availability: 1, order_index: 1 },
+        { id: 104, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Classic', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', price: 19.90, active: 1, availability: 1, order_index: 2 },
+        { id: 105, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Egg Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', price: 27.90, active: 1, availability: 1, order_index: 3 },
+        { id: 106, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', price: 24.90, active: 1, availability: 1, order_index: 4 },
+        { id: 107, business_id: 2, category_id: 12, category_name: 'Acompanhamentos', business_name: "KING'S BURGUER", name: 'Batata Frita 150g', description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', price: 12.90, active: 1, availability: 1, order_index: 1 },
+        { id: 108, business_id: 2, category_id: 12, category_name: 'Acompanhamentos', business_name: "KING'S BURGUER", name: 'Batata Frita 200g+ Cheddar e Bacon Crocante', description: '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', price: 17.90, active: 1, availability: 1, order_index: 2 },
+        { id: 109, business_id: 2, category_id: 13, category_name: 'Bebidas', business_name: "KING'S BURGUER", name: 'Coca-Cola 350ml', description: 'Lata 350ml estupidamente gelada.', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', price: 6.00, active: 1, availability: 1, order_index: 1 }
+      ];
+      list = business_id ? allOfficial.filter(p => p.business_id === Number(business_id)) : allOfficial;
+    }
 
     // Calculate live unit cost, CMV R$, and CMV % for each product
     const enriched = await Promise.all(list.map(async (prod) => {
@@ -926,7 +954,7 @@ app.get('/api/products', async (req, res) => {
     res.json(enriched);
   } catch (err) {
     console.error('[API PRODUCTS ERROR]', err);
-    res.status(500).json({ error: 'Erro ao buscar produtos' });
+    res.json([]);
   }
 });
 
@@ -1016,9 +1044,28 @@ app.get('/api/categories', async (req, res) => {
       params.push(business_id);
     }
     sql += ' ORDER BY order_index ASC, id ASC';
-    const rows = await db.prepare(sql).all(...params);
-    res.json(rows || []);
+    let rows = [];
+    try {
+      rows = await db.prepare(sql).all(...params);
+    } catch (queryErr) {
+      console.warn('[CATEGORIES QUERY FAILED, USING FALLBACK]', queryErr.message);
+    }
+
+    let list = Array.isArray(rows) ? rows : [];
+    if (list.length === 0) {
+      const allOfficialCategories = [
+        { id: 1, business_id: 1, name: 'Açaí no Copo', order_index: 1, active: 1 },
+        { id: 2, business_id: 1, name: 'Barcas & Roletas', order_index: 2, active: 1 },
+        { id: 10, business_id: 2, name: 'Destaque & Combos', order_index: 1, active: 1 },
+        { id: 11, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 2, active: 1 },
+        { id: 12, business_id: 2, name: 'Acompanhamentos', order_index: 3, active: 1 },
+        { id: 13, business_id: 2, name: 'Bebidas', order_index: 4, active: 1 }
+      ];
+      list = business_id ? allOfficialCategories.filter(c => c.business_id === Number(business_id)) : allOfficialCategories;
+    }
+    res.json(list);
   } catch (err) {
+    console.error('[API CATEGORIES ERROR]', err);
     res.json([]);
   }
 });

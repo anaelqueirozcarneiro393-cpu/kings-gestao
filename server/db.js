@@ -139,10 +139,184 @@ const db = {
   }
 };
 
-function initSchema() {
+async function initSchema() {
   try {
     if (isPostgres && pool) {
-      pool.query(`
+      await pool.query(`
+        -- 1. OPERAÇÕES
+        CREATE TABLE IF NOT EXISTS businesses (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          slug VARCHAR(50) NOT NULL UNIQUE,
+          tagline VARCHAR(255),
+          icon VARCHAR(50),
+          color VARCHAR(50),
+          active INTEGER NOT NULL DEFAULT 1,
+          status VARCHAR(30) NOT NULL DEFAULT 'open',
+          is_manually_closed INTEGER DEFAULT 0,
+          opening_time VARCHAR(10) DEFAULT '11:00',
+          closing_time VARCHAR(10) DEFAULT '02:00',
+          min_order NUMERIC(10,2) DEFAULT 0.00,
+          delivery_fee NUMERIC(10,2) DEFAULT 5.00,
+          address TEXT,
+          phone VARCHAR(50),
+          instagram VARCHAR(100),
+          banner_url TEXT,
+          logo_url TEXT,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- 2. CATEGORIAS
+        CREATE TABLE IF NOT EXISTS categories (
+          id SERIAL PRIMARY KEY,
+          business_id INTEGER NOT NULL,
+          name VARCHAR(100) NOT NULL,
+          order_index INTEGER DEFAULT 0,
+          active INTEGER DEFAULT 1
+        );
+
+        -- 3. PRODUTOS
+        CREATE TABLE IF NOT EXISTS products (
+          id SERIAL PRIMARY KEY,
+          business_id INTEGER NOT NULL,
+          category_id INTEGER,
+          name VARCHAR(150) NOT NULL,
+          description TEXT,
+          image_url TEXT,
+          price NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+          active INTEGER DEFAULT 1,
+          availability INTEGER DEFAULT 1,
+          order_index INTEGER DEFAULT 0,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- 4. ADICIONAIS E GRUPOS
+        CREATE TABLE IF NOT EXISTS product_addon_groups (
+          id SERIAL PRIMARY KEY,
+          business_id INTEGER,
+          product_id INTEGER,
+          category_id INTEGER,
+          title VARCHAR(100) NOT NULL,
+          min_choices INTEGER DEFAULT 0,
+          max_choices INTEGER DEFAULT 10,
+          free_choices INTEGER DEFAULT 0,
+          required INTEGER DEFAULT 0,
+          order_index INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS addons (
+          id SERIAL PRIMARY KEY,
+          group_id INTEGER,
+          business_id INTEGER,
+          name VARCHAR(100) NOT NULL,
+          price NUMERIC(10,2) DEFAULT 0.00,
+          cost NUMERIC(10,2) DEFAULT 0.00,
+          ingredient_id INTEGER,
+          ingredient_quantity NUMERIC(10,3) DEFAULT 0,
+          ingredient_unit VARCHAR(20) DEFAULT 'g',
+          active INTEGER DEFAULT 1
+        );
+
+        -- 5. INSUMOS E RECEITAS
+        CREATE TABLE IF NOT EXISTS ingredients (
+          id SERIAL PRIMARY KEY,
+          business_id INTEGER,
+          name VARCHAR(150) NOT NULL,
+          unit VARCHAR(20) NOT NULL,
+          current_stock NUMERIC(12,3) DEFAULT 0.000,
+          min_stock NUMERIC(12,3) DEFAULT 0.000,
+          cost_per_unit NUMERIC(12,4) NOT NULL DEFAULT 0.0000,
+          purchase_unit VARCHAR(30),
+          purchase_quantity NUMERIC(10,2),
+          purchase_price NUMERIC(10,2),
+          purchase_type VARCHAR(50) DEFAULT 'pacote_peso',
+          package_size NUMERIC(10,2) DEFAULT 1,
+          package_unit VARCHAR(20) DEFAULT 'kg',
+          portion_sim_qty NUMERIC(10,2) DEFAULT 100,
+          supplier VARCHAR(150),
+          active INTEGER DEFAULT 1,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS recipe_items (
+          id SERIAL PRIMARY KEY,
+          product_id INTEGER NOT NULL,
+          ingredient_id INTEGER NOT NULL,
+          quantity NUMERIC(10,3) NOT NULL,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- 6. ENTREGADORES E ZONAS
+        CREATE TABLE IF NOT EXISTS couriers (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          phone VARCHAR(50),
+          daily_fee NUMERIC(10,2) DEFAULT 50.00,
+          fee_per_delivery NUMERIC(10,2) DEFAULT 4.00,
+          active INTEGER DEFAULT 1,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS delivery_zones (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          fee NUMERIC(10,2) NOT NULL DEFAULT 5.00,
+          estimated_minutes VARCHAR(50) DEFAULT '30-45 min',
+          active INTEGER DEFAULT 1
+        );
+
+        -- 7. PEDIDOS E ITENS
+        CREATE TABLE IF NOT EXISTS orders (
+          id SERIAL PRIMARY KEY,
+          order_number INTEGER UNIQUE NOT NULL,
+          customer_name VARCHAR(150) NOT NULL,
+          customer_phone VARCHAR(50) NOT NULL,
+          delivery_type VARCHAR(30) NOT NULL,
+          delivery_address TEXT,
+          delivery_neighborhood VARCHAR(100),
+          notes TEXT,
+          kitchen_notes TEXT,
+          subtotal NUMERIC(10,2) NOT NULL,
+          delivery_fee NUMERIC(10,2) DEFAULT 0.00,
+          discount NUMERIC(10,2) DEFAULT 0.00,
+          total NUMERIC(10,2) NOT NULL,
+          payment_method VARCHAR(50) NOT NULL,
+          payment_change NUMERIC(10,2) DEFAULT 0.00,
+          payment_status VARCHAR(30) DEFAULT 'pendente',
+          status VARCHAR(30) NOT NULL DEFAULT 'novo',
+          stock_deducted INTEGER DEFAULT 0,
+          source VARCHAR(50) DEFAULT 'cardapio',
+          coupon_code VARCHAR(50),
+          courier_id INTEGER,
+          ready_at TIMESTAMPTZ,
+          dispatched_at TIMESTAMPTZ,
+          delivered_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS order_items (
+          id SERIAL PRIMARY KEY,
+          order_id INTEGER NOT NULL,
+          business_id INTEGER NOT NULL,
+          product_id INTEGER NOT NULL,
+          product_name VARCHAR(150) NOT NULL,
+          unit_price NUMERIC(10,2) NOT NULL,
+          quantity INTEGER NOT NULL,
+          subtotal NUMERIC(10,2) NOT NULL,
+          notes TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS order_item_addons (
+          id SERIAL PRIMARY KEY,
+          order_item_id INTEGER NOT NULL,
+          addon_id INTEGER,
+          addon_name VARCHAR(100) NOT NULL,
+          unit_price NUMERIC(10,2) DEFAULT 0.00,
+          quantity INTEGER DEFAULT 1
+        );
+
+        -- 8. CUPONS E CONFIGURAÇÕES
         CREATE TABLE IF NOT EXISTS coupons (
           id SERIAL PRIMARY KEY,
           code VARCHAR(50) UNIQUE NOT NULL,
@@ -163,9 +337,132 @@ function initSchema() {
           excluded_product_ids TEXT,
           created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS settings (
+          key VARCHAR(100) PRIMARY KEY,
+          value TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS expenses (
+          id SERIAL PRIMARY KEY,
+          business_id INTEGER,
+          description VARCHAR(200) NOT NULL,
+          amount NUMERIC(10,2) NOT NULL,
+          category VARCHAR(50) NOT NULL,
+          date VARCHAR(20) NOT NULL,
+          observation TEXT,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS cash_shifts (
+          id SERIAL PRIMARY KEY,
+          operator_name VARCHAR(100) NOT NULL,
+          opened_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          closed_at TIMESTAMPTZ,
+          initial_float NUMERIC(10,2) NOT NULL,
+          final_cash_counted NUMERIC(10,2),
+          status VARCHAR(20) DEFAULT 'open',
+          notes TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS cash_movements (
+          id SERIAL PRIMARY KEY,
+          shift_id INTEGER NOT NULL,
+          type VARCHAR(20) NOT NULL,
+          amount NUMERIC(10,2) NOT NULL,
+          reason VARCHAR(255),
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS inventory_audits (
+          id SERIAL PRIMARY KEY,
+          business_id INTEGER,
+          audit_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          operator VARCHAR(100),
+          notes TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS inventory_audit_items (
+          id SERIAL PRIMARY KEY,
+          audit_id INTEGER NOT NULL,
+          ingredient_id INTEGER NOT NULL,
+          system_stock NUMERIC(12,3),
+          physical_stock NUMERIC(12,3),
+          variance NUMERIC(12,3),
+          unit_cost NUMERIC(12,4),
+          variance_value NUMERIC(10,2)
+        );
+
+        CREATE TABLE IF NOT EXISTS stock_movements (
+          id SERIAL PRIMARY KEY,
+          ingredient_id INTEGER NOT NULL,
+          business_id INTEGER,
+          type VARCHAR(30) NOT NULL,
+          quantity NUMERIC(12,3) NOT NULL,
+          previous_stock NUMERIC(12,3),
+          new_stock NUMERIC(12,3),
+          reason VARCHAR(255),
+          order_id INTEGER,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- DESABILITA RLS NO SUPABASE
+        ALTER TABLE businesses DISABLE ROW LEVEL SECURITY;
+        ALTER TABLE categories DISABLE ROW LEVEL SECURITY;
+        ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+        ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
+        ALTER TABLE order_items DISABLE ROW LEVEL SECURITY;
         ALTER TABLE coupons DISABLE ROW LEVEL SECURITY;
-        ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(50);
-      `).catch(err => console.warn('[DB SCHEMA INIT PG]', err.message));
+        ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
+
+        -- SEED DAS OPERAÇÕES DA MARCA KING'S (Açaí e Burguer abertos, Pizza em breve)
+        INSERT INTO businesses (id, name, slug, tagline, icon, color, active, status, is_manually_closed, opening_time, closing_time, min_order, delivery_fee, address, phone, instagram)
+        VALUES 
+          (1, 'KING''S AÇAÍ', 'acai', 'O verdadeiro açaí artesanal e cremoso', 'acai', '#9333ea', 1, 'open', 0, '11:00', '02:00', 15.00, 5.00, 'Av. Principal, 1000 - Centro', '(11) 99999-1001', '@kingsacai.oficial'),
+          (2, 'KING''S BURGUER', 'burguer', 'Burguers artesanais feitos no fogo e sabor inigualável', 'burger', '#f59e0b', 1, 'open', 0, '18:00', '00:00', 20.00, 6.00, 'Av. Principal, 1000 - Centro', '(11) 99999-1002', '@kingsburguer.oficial'),
+          (3, 'KING''S PIZZA', 'pizza', 'Pizzas artesanais com fermentação natural', 'pizza', '#ef4444', 0, 'coming_soon', 0, '18:00', '23:30', 30.00, 7.00, 'Av. Principal, 1000 - Centro', '(11) 99999-1003', '@kingspizza.oficial')
+        ON CONFLICT (id) DO UPDATE SET 
+          name = EXCLUDED.name,
+          slug = EXCLUDED.slug,
+          active = EXCLUDED.active,
+          status = EXCLUDED.status;
+
+        -- SEED DAS CATEGORIAS
+        INSERT INTO categories (id, business_id, name, order_index, active)
+        VALUES
+          (1, 1, 'Açaí no Copo', 1, 1),
+          (2, 1, 'Barcas & Roletas', 2, 1),
+          (10, 2, 'Destaque & Combos', 1, 1),
+          (11, 2, 'Hambúrguer Artesanal', 2, 1),
+          (12, 2, 'Acompanhamentos', 3, 1),
+          (13, 2, 'Bebidas', 4, 1)
+        ON CONFLICT (id) DO NOTHING;
+
+        -- SEED DOS PRODUTOS OFICIAIS
+        INSERT INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
+        VALUES
+          (1, 1, 1, 'Açaí no Copo 300ml', 'Copo de 300ml montado com nosso açaí cremoso batido na hora com xarope natural.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', 16.90, 1, 1, 1),
+          (2, 1, 1, 'Açaí no Copo 500ml', 'O clássico mais pedido! 500ml de puro açaí cremoso com camadas generosas de complementos.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', 22.90, 1, 1, 2),
+          (101, 2, 10, '2 King''s Classic + Coca 350ml', '2 king''s classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml', 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', 36.90, 1, 1, 1),
+          (102, 2, 10, 'Combo Double Bacon', 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', 39.90, 1, 1, 2),
+          (103, 2, 11, 'Kings Double Bacon', 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', 32.90, 1, 1, 1),
+          (104, 2, 11, 'Kings Classic', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', 19.90, 1, 1, 2),
+          (105, 2, 11, 'Kings Egg Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', 27.90, 1, 1, 3),
+          (106, 2, 11, 'Kings Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', 24.90, 1, 1, 4),
+          (107, 2, 12, 'Batata Frita 150g', 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', 12.90, 1, 1, 1),
+          (108, 2, 12, 'Batata Frita 200g+ Cheddar e Bacon Crocante', '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', 17.90, 1, 1, 2),
+          (109, 2, 13, 'Coca-Cola 350ml', 'Lata 350ml estupidamente gelada.', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', 6.00, 1, 1, 1)
+        ON CONFLICT (id) DO NOTHING;
+
+        -- SEED DE CONFIGURAÇÕES INICIAIS
+        INSERT INTO settings (key, value) VALUES
+          ('admin_pin', '#Kai-24xz'),
+          ('store_name', 'KING''S GESTÃO'),
+          ('whatsapp_notification_phone', '5511999999999'),
+          ('default_delivery_fee', '5.00')
+        ON CONFLICT (key) DO NOTHING;
+      `);
+      console.log('[DB] Schema e dados oficiais sincronizados com sucesso.');
     } else if (sqliteDb) {
       sqliteDb.exec(`
         CREATE TABLE IF NOT EXISTS coupons (
