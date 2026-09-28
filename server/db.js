@@ -41,9 +41,29 @@ if (isPostgres) {
 }
 
 // Converte parâmetros posicionais '?' do SQLite para '$1, $2, $3' do PostgreSQL
+// e traduz funções de data do SQLite para sintaxe nativa do PostgreSQL
 function formatSqlForPg(sql) {
+  let s = sql;
+
+  // Tradução de strftime para to_char do Postgres
+  s = s.replace(/strftime\s*\(\s*'%Y-%m'\s*,\s*'now'\s*,\s*'localtime'\s*,\s*'-1 month'\s*\)/gi, "to_char(CURRENT_DATE - INTERVAL '1 month', 'YYYY-MM')");
+  s = s.replace(/strftime\s*\(\s*'%Y-%m'\s*,\s*'now'\s*,\s*'localtime'\s*\)/gi, "to_char(CURRENT_DATE, 'YYYY-MM')");
+  s = s.replace(/strftime\s*\(\s*'%Y-%m'\s*,\s*([a-zA-Z0-9_\.]+)(?:\s*,\s*'localtime')?\s*\)/gi, "to_char($1, 'YYYY-MM')");
+  s = s.replace(/strftime\s*\(\s*'%H'\s*,\s*([a-zA-Z0-9_\.]+)(?:\s*,\s*'localtime')?\s*\)/gi, "to_char($1, 'HH24')");
+
+  // Tradução de date(...) do SQLite para CURRENT_DATE e DATE(...) do Postgres
+  s = s.replace(/date\s*\(\s*'now'\s*,\s*'localtime'\s*,\s*'-1 day'\s*\)/gi, "(CURRENT_DATE - INTERVAL '1 day')");
+  s = s.replace(/date\s*\(\s*'now'\s*,\s*'localtime'\s*,\s*'-7 days'\s*\)/gi, "(CURRENT_DATE - INTERVAL '7 days')");
+  s = s.replace(/date\s*\(\s*'now'\s*,\s*'localtime'\s*\)/gi, "CURRENT_DATE");
+  s = s.replace(/date\s*\(\s*([a-zA-Z0-9_\.]+)\s*,\s*'localtime'\s*\)/gi, "DATE($1)");
+  s = s.replace(/date\s*\(\s*([a-zA-Z0-9_\.]+)\s*\)/gi, "DATE($1)");
+
+  // Tradução de JULIANDAY para Postgres
+  s = s.replace(/ROUND\s*\(\s*JULIANDAY\('now'\)\s*-\s*JULIANDAY\(([^)]+)\)\s*\)/gi, "ROUND(EXTRACT(EPOCH FROM (NOW() - $1)) / 86400)");
+
+  // Substitui '?' por '$1, $2, ...'
   let paramIndex = 1;
-  return sql.replace(/\?/g, () => `$${paramIndex++}`);
+  return s.replace(/\?/g, () => `$${paramIndex++}`);
 }
 
 const db = {
