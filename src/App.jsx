@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
 import { PublicMenuPage } from './pages/public/PublicMenuPage';
 import { OrderTrackingPage } from './pages/public/OrderTrackingPage';
@@ -22,10 +22,42 @@ import { SettingsPage } from './pages/admin/SettingsPage';
 export function App() {
   const { isAuthenticated, loading } = useAuth();
 
-  // Navigation State
-  // Mode: 'public_menu', 'order_tracking', 'admin_login', 'admin'
-  const [currentMode, setCurrentMode] = useState('admin'); // Default to admin for the owner
+  // Navigation State Baseada na URL
+  // /cardapio ou / -> Cardápio Digital Público
+  // /admin -> Painel Operacional / Login
+  const getInitialMode = () => {
+    const path = window.location.pathname.toLowerCase();
+    if (path.startsWith('/admin') || path.startsWith('/login')) {
+      return 'admin';
+    }
+    return 'public_menu'; // /cardapio e / abrem direto o cardápio público
+  };
+
+  const [currentMode, setCurrentMode] = useState(getInitialMode);
   const [trackingOrderNumber, setTrackingOrderNumber] = useState(null);
+
+  // Sincroniza histórico e botões de avançar/voltar do navegador
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      if (path.startsWith('/admin') || path.startsWith('/login')) {
+        setCurrentMode('admin');
+      } else {
+        setCurrentMode('public_menu');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (mode) => {
+    setCurrentMode(mode);
+    if (mode === 'admin' || mode === 'admin_login') {
+      window.history.pushState(null, '', '/admin');
+    } else if (mode === 'public_menu') {
+      window.history.pushState(null, '', '/cardapio');
+    }
+  };
 
   // Admin sub-routes
   const [adminRoute, setAdminRoute] = useState('dashboard');
@@ -45,12 +77,12 @@ export function App() {
     return (
       <OrderTrackingPage
         orderNumber={trackingOrderNumber}
-        onBackToMenu={() => setCurrentMode('public_menu')}
+        onBackToMenu={() => navigateTo('public_menu')}
       />
     );
   }
 
-  // Customer Digital Menu View
+  // Customer Digital Menu View (/cardapio e /)
   if (currentMode === 'public_menu') {
     return (
       <PublicMenuPage
@@ -58,21 +90,21 @@ export function App() {
           setTrackingOrderNumber(orderNum);
           setCurrentMode('order_tracking');
         }}
-        onNavigateAdmin={() => setCurrentMode(isAuthenticated ? 'admin' : 'admin_login')}
+        onNavigateAdmin={() => navigateTo('admin')}
       />
     );
   }
 
-  // Admin Login View
+  // Admin Login View (/admin quando deslogado)
   if (currentMode === 'admin_login' || (!isAuthenticated && currentMode === 'admin')) {
     return (
       <LoginPage
-        onBackToMenu={() => setCurrentMode('public_menu')}
+        onBackToMenu={() => navigateTo('public_menu')}
       />
     );
   }
 
-  // Admin Authenticated View
+  // Admin Authenticated View (/admin quando autenticado)
   return (
     <AdminLayout
       currentRoute={adminRoute}
@@ -81,7 +113,7 @@ export function App() {
       }}
       selectedBusinessId={selectedBusinessId}
       onSelectBusiness={(bId) => setSelectedBusinessId(bId)}
-      onNavigatePublicMenu={() => setCurrentMode('public_menu')}
+      onNavigatePublicMenu={() => navigateTo('public_menu')}
     >
       {adminRoute === 'dashboard' && (
         <DashboardPage

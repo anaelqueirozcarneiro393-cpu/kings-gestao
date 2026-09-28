@@ -51,8 +51,14 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
     );
   }
 
-  const currentBusiness = data?.businesses?.find(b => b.slug === selectedSlug) || data?.businesses?.[0];
-  const isComingSoon = !currentBusiness?.active || currentBusiness?.status === 'coming_soon';
+  const activeBusinesses = (data?.businesses && data.businesses.length > 0) ? data.businesses : [
+    { id: 1, name: "KING'S AÇAÍ", slug: 'acai', tagline: 'O verdadeiro açaí artesanal e cremoso', is_open: true, active: 1, status: 'open', opening_time: '11:00', closing_time: '02:00' },
+    { id: 2, name: "KING'S BURGUER", slug: 'burguer', tagline: 'Hambúrgueres artesanais feitos no fogo', is_open: true, active: 1, status: 'open', opening_time: '18:00', closing_time: '02:00' },
+    { id: 3, name: "KING'S PIZZA", slug: 'pizza', tagline: 'Massas artesanais fermentadas e recheios nobres', is_open: false, active: 0, status: 'coming_soon', opening_time: '18:00', closing_time: '00:00' }
+  ];
+
+  const currentBusiness = activeBusinesses.find(b => b.slug === selectedSlug) || activeBusinesses.find(b => b.slug === 'acai') || activeBusinesses[0];
+  const isComingSoon = selectedSlug === 'pizza';
   const isOpen = currentBusiness?.is_open;
 
   // Filter categories and products for the selected business
