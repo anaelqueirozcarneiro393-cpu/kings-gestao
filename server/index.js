@@ -334,25 +334,107 @@ app.get('/api/public/menu', async (req, res) => {
     const addonGroups = await db.prepare('SELECT * FROM product_addon_groups ORDER BY order_index ASC').all();
     const addons = await db.prepare('SELECT * FROM addons WHERE active = 1 ORDER BY id ASC').all();
 
-    // Attach addons to groups
-    const groupsWithAddons = (addonGroups || []).map(group => ({
-      ...group,
-      addons: (addons || []).filter(a => a.group_id === group.id)
-    }));
+    const DEFAULT_ADDON_GROUPS = [
+      {
+        id: 1,
+        business_id: 1,
+        title: 'Escolha seus Complementos (4 Grátis)',
+        min_choices: 0,
+        max_choices: 15,
+        free_choices: 4,
+        required: 0,
+        order_index: 1,
+        addons: [
+          { id: 1, group_id: 1, name: 'Leite em Pó (Ninho)', price: 3.00 },
+          { id: 2, group_id: 1, name: 'Granola Tradicional Crocante', price: 3.00 },
+          { id: 3, group_id: 1, name: 'Leite Condensado', price: 3.00 },
+          { id: 4, group_id: 1, name: 'Banana Fresca Fatiada', price: 3.00 },
+          { id: 5, group_id: 1, name: 'Morango Fresco Fatiado', price: 4.00 },
+          { id: 6, group_id: 1, name: 'Paçoca Rolha', price: 3.00 },
+          { id: 7, group_id: 1, name: 'Gotas de Chocolate', price: 3.50 },
+          { id: 8, group_id: 1, name: 'Creme de Avelã (Nutella)', price: 5.00 },
+          { id: 9, group_id: 1, name: 'Mel Silvestre Puro', price: 3.00 },
+          { id: 10, group_id: 1, name: 'Calda de Morango', price: 3.00 },
+          { id: 11, group_id: 1, name: 'Calda de Chocolate', price: 3.00 },
+          { id: 12, group_id: 1, name: 'Chocoball Crocante', price: 3.00 },
+          { id: 13, group_id: 1, name: 'Confetes M&Ms', price: 3.50 },
+          { id: 14, group_id: 1, name: 'Aveia em Flocos', price: 2.50 },
+          { id: 15, group_id: 1, name: 'Amendoim Triturado', price: 3.00 }
+        ]
+      },
+      {
+        id: 2,
+        business_id: 2,
+        title: 'Turbine seu Hambúrguer (Adicionais Extras)',
+        min_choices: 0,
+        max_choices: 10,
+        free_choices: 0,
+        required: 0,
+        order_index: 1,
+        addons: [
+          { id: 20, group_id: 2, name: 'Bacon Crocante em Fatias', price: 5.00 },
+          { id: 21, group_id: 2, name: 'Blend Artesanal Extra 160g', price: 9.00 },
+          { id: 22, group_id: 2, name: 'Queijo Cheddar Cremoso Extra', price: 4.00 },
+          { id: 23, group_id: 2, name: 'Queijo Mussarela Fatiado', price: 4.00 },
+          { id: 24, group_id: 2, name: 'Ovo Frito na Manteiga', price: 3.00 },
+          { id: 25, group_id: 2, name: 'Cebola Caramelizada na Chapa', price: 3.50 },
+          { id: 26, group_id: 2, name: 'Picles Artesanal em Rodelas', price: 3.00 },
+          { id: 27, group_id: 2, name: 'Molho Barbecue Defumado (50ml)', price: 3.00 },
+          { id: 28, group_id: 2, name: 'Maionese Temperada da Casa (50ml)', price: 3.00 }
+        ]
+      },
+      {
+        id: 3,
+        business_id: 2,
+        title: 'Ponto da Carne',
+        min_choices: 1,
+        max_choices: 1,
+        free_choices: 1,
+        required: 1,
+        order_index: 2,
+        addons: [
+          { id: 30, group_id: 3, name: 'Ao Ponto (Vermelhinho no centro, muito suculento)', price: 0.00 },
+          { id: 31, group_id: 3, name: 'Ao Ponto para Bem (Centro levemente rosado)', price: 0.00 },
+          { id: 32, group_id: 3, name: 'Bem Passado (Carne tostadinha e firme)', price: 0.00 }
+        ]
+      }
+    ];
 
-    // Attach groups to products
-    const productsWithDetails = (products || []).map(product => {
-      const relevantGroups = groupsWithAddons.filter(g =>
-        g.product_id === product.id ||
-        (g.product_id === null && g.category_id === product.category_id) ||
-        (g.product_id === null && g.category_id === null && g.business_id === product.business_id)
-      );
+    // Attach addons to groups
+    let groupsWithAddons = (addonGroups && addonGroups.length > 0)
+      ? addonGroups.map(group => ({
+          ...group,
+          addons: (addons || []).filter(a => Number(a.group_id) === Number(group.id))
+        }))
+      : DEFAULT_ADDON_GROUPS;
+
+    // Helper to attach groups to a product
+    const attachAddonGroups = (product) => {
+      const pName = (product.name || '').toLowerCase();
+      const catId = Number(product.category_id);
+      const isDrinkOrSide = catId === 12 || catId === 13 || 
+        pName.includes('coca') || pName.includes('batata') || pName.includes('água') || pName.includes('refrigerante');
+
+      const relevantGroups = groupsWithAddons.filter(g => {
+        if (g.product_id && Number(g.product_id) === Number(product.id)) return true;
+        if (g.category_id && Number(g.category_id) === catId) return true;
+        if (Number(g.business_id) === Number(product.business_id)) {
+          if (Number(product.business_id) === 2 && isDrinkOrSide) {
+            return false;
+          }
+          return true;
+        }
+        return false;
+      });
 
       return {
         ...product,
         addon_groups: relevantGroups
       };
-    });
+    };
+
+    // Attach groups to products
+    const productsWithDetails = (products || []).map(attachAddonGroups);
 
     // Garante que o cardápio oficial do King's Burguer seja retornado mesmo que o banco ainda não tenha sido populado
     const OFFICIAL_BURGUER_CATEGORIES = [
@@ -437,7 +519,7 @@ app.get('/api/public/menu', async (req, res) => {
     let mergedProducts = [...(productsWithDetails || [])];
     const hasBurguerProds = mergedProducts.some(p => p.business_id === 2);
     if (!hasBurguerProds) {
-      mergedProducts = [...mergedProducts, ...OFFICIAL_BURGUER_PRODUCTS];
+      mergedProducts = [...mergedProducts, ...OFFICIAL_BURGUER_PRODUCTS.map(attachAddonGroups)];
     }
 
     const settingsRows = await db.prepare('SELECT * FROM settings').all();

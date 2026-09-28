@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Copy, Check, MapPin, Sparkles, Ticket } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Copy, Check, MapPin, Sparkles, Ticket, Flame } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
@@ -7,6 +7,7 @@ import { formatCurrency } from '../../utils/formatters';
 export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
   const {
     items,
+    addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
@@ -107,6 +108,108 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
     navigator.clipboard.writeText('pix@kingsgastronomia.com.br');
     setCopiedPix(true);
     setTimeout(() => setCopiedPix(false), 2000);
+  };
+
+  // Catálogo de Order Bumps para Açaí e Burguer
+  const ORDER_BUMP_CATALOG = [
+    {
+      id: 'bump_coca',
+      product_id: 109,
+      business_id: 2,
+      business_name: "KING'S BURGUER",
+      business_slug: 'burguer',
+      name: 'Coca-Cola 350ml Geladinha',
+      subtitle: 'Lata 350ml trincando de gelada',
+      price: 6.00,
+      image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
+      icon: '🥤'
+    },
+    {
+      id: 'bump_batata',
+      product_id: 107,
+      business_id: 2,
+      business_name: "KING'S BURGUER",
+      business_slug: 'burguer',
+      name: 'Batata Frita 150g Crocante',
+      subtitle: 'Sequinha e dourada à perfeição',
+      price: 12.90,
+      image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
+      icon: '🍟'
+    },
+    {
+      id: 'bump_cheddar_bacon',
+      product_id: 108,
+      business_id: 2,
+      business_name: "KING'S BURGUER",
+      business_slug: 'burguer',
+      name: 'Batata 200g + Cheddar & Bacon',
+      subtitle: 'Batata coberta com cheddar cremoso e bacon',
+      price: 17.90,
+      image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80',
+      icon: '🥓'
+    },
+    {
+      id: 'bump_nutella',
+      product_id: 201,
+      business_id: 1,
+      business_name: "KING'S AÇAÍ",
+      business_slug: 'acai',
+      name: 'Pote Extra Nutella Pura 50g',
+      subtitle: 'Creme de avelã para turbinar seu açaí',
+      price: 6.00,
+      image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80',
+      icon: '🍫'
+    },
+    {
+      id: 'bump_morango',
+      product_id: 202,
+      business_id: 1,
+      business_name: "KING'S AÇAÍ",
+      business_slug: 'acai',
+      name: 'Porção Extra Morangos Frescos',
+      subtitle: 'Morangos selecionados fatiados',
+      price: 5.00,
+      image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80',
+      icon: '🍓'
+    },
+    {
+      id: 'bump_agua',
+      product_id: 203,
+      business_id: 1,
+      business_name: "KING'S AÇAÍ",
+      business_slug: 'acai',
+      name: 'Água Mineral Crystal 500ml',
+      subtitle: 'Geladinha e refrescante',
+      price: 4.00,
+      image_url: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=600&q=80',
+      icon: '💧'
+    }
+  ];
+
+  const cartBusinessId = items[0]?.business_id || 2;
+  const availableBumps = ORDER_BUMP_CATALOG.filter(bump => {
+    const matchBiz = Number(bump.business_id) === Number(cartBusinessId);
+    const inCart = items.some(i => Number(i.product_id) === Number(bump.product_id) || i.product_name === bump.name);
+    return matchBiz && !inCart;
+  }).slice(0, 2);
+
+  const handleAddBump = (bump) => {
+    addToCart(
+      {
+        id: bump.product_id,
+        name: bump.name,
+        price: bump.price,
+        image_url: bump.image_url
+      },
+      {
+        id: bump.business_id,
+        name: bump.business_name,
+        slug: bump.business_slug
+      },
+      1,
+      [],
+      'Order Bump adicionado no carrinho'
+    );
   };
 
   const handleCheckoutSubmit = async (e) => {
@@ -260,6 +363,47 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
                     </div>
                   ))}
                 </div>
+
+                {/* Order Bumps / Recomendações Especiais */}
+                {availableBumps.length > 0 && (
+                  <div className="pt-3 border-t border-slate-800/80">
+                    <div className="flex items-center gap-1.5 mb-2.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                        Aproveite e turbine seu pedido!
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {availableBumps.map(bump => (
+                        <div
+                          key={bump.id}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-slate-900/80 to-slate-900 border border-amber-500/30 hover:border-amber-500/60 transition-all duration-200"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <span className="text-xl flex-shrink-0">{bump.icon}</span>
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold text-slate-100 truncate">{bump.name}</div>
+                              <div className="text-[10px] text-slate-400 truncate">{bump.subtitle}</div>
+                              <div className="text-xs font-semibold text-emerald-400 mt-0.5">
+                                + {formatCurrency(bump.price)}
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleAddBump(bump)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow-sm active:scale-95 transition-all whitespace-nowrap cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span>Adicionar</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Modalidade de Entrega / Retirada */}
                 <div className="pt-2 border-t border-slate-800">

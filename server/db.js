@@ -453,6 +453,54 @@ async function initSchema() {
           ('whatsapp_notification_phone', '5511999999999'),
           ('default_delivery_fee', '5.00')
         ON CONFLICT (key) DO NOTHING;
+
+        -- SEED DE GRUPOS DE ADICIONAIS (Açaí: 4 grátis, Burguer: pagos)
+        INSERT INTO product_addon_groups (id, business_id, title, min_choices, max_choices, free_choices, required, order_index)
+        VALUES
+          (1, 1, 'Escolha seus Complementos (4 Grátis)', 0, 15, 4, 0, 1),
+          (2, 2, 'Turbine seu Hambúrguer (Adicionais Extras)', 0, 10, 0, 0, 1),
+          (3, 2, 'Ponto da Carne', 1, 1, 1, 1, 2)
+        ON CONFLICT (id) DO UPDATE SET
+          title = EXCLUDED.title,
+          free_choices = EXCLUDED.free_choices,
+          max_choices = EXCLUDED.max_choices,
+          min_choices = EXCLUDED.min_choices,
+          required = EXCLUDED.required;
+
+        -- SEED DE ADICIONAIS / COMPLEMENTOS
+        INSERT INTO addons (id, group_id, business_id, name, price, active)
+        VALUES
+          (1, 1, 1, 'Leite em Pó (Ninho)', 3.00, 1),
+          (2, 1, 1, 'Granola Tradicional Crocante', 3.00, 1),
+          (3, 1, 1, 'Leite Condensado', 3.00, 1),
+          (4, 1, 1, 'Banana Fresca Fatiada', 3.00, 1),
+          (5, 1, 1, 'Morango Fresco Fatiado', 4.00, 1),
+          (6, 1, 1, 'Paçoca Rolha', 3.00, 1),
+          (7, 1, 1, 'Gotas de Chocolate', 3.50, 1),
+          (8, 1, 1, 'Creme de Avelã (Nutella)', 5.00, 1),
+          (9, 1, 1, 'Mel Silvestre Puro', 3.00, 1),
+          (10, 1, 1, 'Calda de Morango', 3.00, 1),
+          (11, 1, 1, 'Calda de Chocolate', 3.00, 1),
+          (12, 1, 1, 'Chocoball Crocante', 3.00, 1),
+          (13, 1, 1, 'Confetes M&Ms', 3.50, 1),
+          (14, 1, 1, 'Aveia em Flocos', 2.50, 1),
+          (15, 1, 1, 'Amendoim Triturado', 3.00, 1),
+          (20, 2, 2, 'Bacon Crocante em Fatias', 5.00, 1),
+          (21, 2, 2, 'Blend Artesanal Extra 160g', 9.00, 1),
+          (22, 2, 2, 'Queijo Cheddar Cremoso Extra', 4.00, 1),
+          (23, 2, 2, 'Queijo Mussarela Fatiado', 4.00, 1),
+          (24, 2, 2, 'Ovo Frito na Manteiga', 3.00, 1),
+          (25, 2, 2, 'Cebola Caramelizada na Chapa', 3.50, 1),
+          (26, 2, 2, 'Picles Artesanal em Rodelas', 3.00, 1),
+          (27, 2, 2, 'Molho Barbecue Defumado (50ml)', 3.00, 1),
+          (28, 2, 2, 'Maionese Temperada da Casa (50ml)', 3.00, 1),
+          (30, 3, 2, 'Ao Ponto (Vermelhinho no centro, muito suculento)', 0.00, 1),
+          (31, 3, 2, 'Ao Ponto para Bem (Centro levemente rosado)', 0.00, 1),
+          (32, 3, 2, 'Bem Passado (Carne tostadinha e firme)', 0.00, 1)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          price = EXCLUDED.price,
+          active = EXCLUDED.active;
       `);
 
       // Ajustar sequences com segurança (não quebra se o nome da sequence for ligeiramente diferente)
@@ -465,6 +513,12 @@ async function initSchema() {
             END IF;
             IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'categories_id_seq') THEN
               PERFORM setval('categories_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 50) FROM categories));
+            END IF;
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'product_addon_groups_id_seq') THEN
+              PERFORM setval('product_addon_groups_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 20) FROM product_addon_groups));
+            END IF;
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'addons_id_seq') THEN
+              PERFORM setval('addons_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 100) FROM addons));
             END IF;
           END $$;
         `);
