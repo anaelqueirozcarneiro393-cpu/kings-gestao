@@ -406,9 +406,10 @@ INSERT INTO categories (id, business_id, name, order_index, active) VALUES
   (1, 1, 'Açaí no Copo', 1, 1),
   (2, 1, 'Barcas & Roletas', 2, 1),
   (3, 1, 'Bebidas Geladas', 3, 1),
-  (4, 2, 'Burguers Artesanais', 1, 1),
-  (5, 2, 'Acompanhamentos & Fritas', 2, 1),
-  (6, 2, 'Bebidas & Refrigerantes', 3, 1)
+  (4, 2, 'Destaque & Combos', 1, 1),
+  (5, 2, 'Hambúrguer Artesanal', 2, 1),
+  (6, 2, 'Acompanhamentos', 3, 1),
+  (7, 2, 'Bebidas', 4, 1)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insumos / Embalagens
@@ -421,12 +422,17 @@ INSERT INTO ingredients (id, business_id, name, unit, current_stock, min_stock, 
   (6, 1, 'Nutella Original', 'g', 1500, 400, 0.0650, 'kg', 3, 195.00, 'pacote_peso', 3, 'kg', 30),
   (7, 1, 'Copo Descartável 300ml', 'un', 150, 40, 0.3500, 'un', 100, 35.00, 'unidade_direta', 1, 'un', 1),
   (8, 1, 'Copo Descartável 500ml', 'un', 220, 50, 0.4500, 'un', 100, 45.00, 'unidade_direta', 1, 'un', 1),
-  (9, 2, 'Pão de Brioche Artesanal', 'un', 80, 25, 1.8000, 'un', 50, 90.00, 'caixa_unidades', 50, 'un', 1),
-  (10, 2, 'Blend Bovino 160g (Fraldinha/Peito)', 'g', 14400, 3200, 0.0349, 'kg', 1, 34.90, 'a_granel_kg', 1, 'kg', 160),
-  (11, 2, 'Queijo Cheddar Fatiado Especial', 'un', 180, 40, 0.8000, 'un', 100, 80.00, 'caixa_unidades', 100, 'un', 2),
-  (12, 2, 'Bacon Defumado em Fatias Crocantes', 'g', 2800, 800, 0.0450, 'kg', 3, 135.00, 'pacote_peso', 1, 'kg', 40),
-  (13, 2, 'Batata Palito Pré-Frita Congelada', 'g', 18000, 4000, 0.0119, 'kg', 2, 23.90, 'pacote_peso', 2, 'kg', 150),
-  (14, 2, 'Embalagem Térmica Antivazamento King', 'un', 140, 40, 0.8500, 'un', 100, 85.00, 'unidade_direta', 1, 'un', 1)
+  (9, 2, 'Pão de Brioche Artesanal', 'un', 120, 30, 1.8000, 'un', 50, 90.00, 'caixa_unidades', 50, 'un', 1),
+  (10, 2, 'Blend Bovino 160g', 'g', 16000, 3200, 0.0349, 'kg', 1, 34.90, 'a_granel_kg', 1, 'kg', 160),
+  (11, 2, 'Blend Bovino 120g', 'g', 12000, 2400, 0.0349, 'kg', 1, 34.90, 'a_granel_kg', 1, 'kg', 120),
+  (12, 2, 'Queijo Cheddar Cremoso', 'g', 4000, 1000, 0.0380, 'kg', 2, 76.00, 'pacote_peso', 2, 'kg', 50),
+  (13, 2, 'Bacon Crocante em Fatias', 'g', 3500, 800, 0.0450, 'kg', 3, 135.00, 'pacote_peso', 1, 'kg', 40),
+  (14, 2, 'Batata Palito Pré-Frita', 'g', 20000, 4000, 0.0119, 'kg', 2, 23.90, 'pacote_peso', 2, 'kg', 150),
+  (15, 2, 'Molho Barbecue Artesanal', 'g', 3000, 800, 0.0220, 'kg', 1, 22.00, 'pacote_peso', 1, 'kg', 30),
+  (16, 2, 'Ovo Caipira/Granja', 'un', 60, 20, 0.7000, 'un', 30, 21.00, 'unidade_direta', 30, 'un', 1),
+  (17, 2, 'Alface, Tomate e Cebola Roxa', 'g', 4000, 1000, 0.0090, 'kg', 2, 18.00, 'a_granel_kg', 1, 'kg', 40),
+  (18, 2, 'Coca-Cola 350ml Lata', 'un', 80, 24, 3.2000, 'un', 12, 38.40, 'unidade_direta', 12, 'un', 1),
+  (19, 2, 'Embalagem Burger / Delivery King', 'un', 150, 40, 0.8500, 'un', 100, 85.00, 'unidade_direta', 1, 'un', 1)
 ON CONFLICT (id) DO NOTHING;
 
 -- Produtos
@@ -434,11 +440,16 @@ INSERT INTO products (id, business_id, category_id, name, description, image_url
   (1, 1, 1, 'Açaí no Copo 300ml', 'Copo de 300ml montado com nosso açaí cremoso batido na hora com xarope natural.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', 16.90, 1, 1, 1),
   (2, 1, 1, 'Açaí no Copo 500ml', 'O clássico mais pedido! 500ml de puro açaí cremoso com camadas generosas de complementos.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', 22.90, 1, 1, 2),
   (3, 1, 1, 'Açaí no Copo 700ml', 'Tamanho família individual. 700ml para saciar toda a sua vontade de açaí.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', 28.90, 1, 1, 3),
-  (4, 2, 4, 'Clássico King', 'Pão brioche selado na manteiga, blend bovino 160g no ponto da casa, queijo cheddar derretido e maionese secreta da King.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', 26.90, 1, 1, 1),
-  (5, 2, 4, 'King Bacon', 'Pão brioche fofinho, blend bovino 160g suculento, fatias duplas de cheddar e generosas tiras de bacon crocante.', 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', 32.90, 1, 1, 2),
-  (6, 2, 4, 'Duplo Bacon King Especial', 'Para os verdadeiros carnívoros: 2x blends bovinos de 160g (320g!), 4 fatias de cheddar e montanha de bacon.', 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', 42.90, 1, 1, 3),
-  (7, 2, 5, 'Batata Frita Tradicional P', '150g de batatas palito douradas, sequinhas e crocantes com sal e páprica defumada.', 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', 14.00, 1, 1, 1),
-  (8, 2, 6, 'Coca-Cola Original 350ml', 'Lata 350ml estupidamente gelada.', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', 6.50, 1, 1, 1)
+  -- King's Burguer Produtos Oficiais
+  (4, 2, 4, '2 King''s Classic + Coca 350ml', '2 king''s classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml', 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', 36.90, 1, 1, 1),
+  (5, 2, 4, 'Combo Double Bacon', 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', 39.90, 1, 1, 2),
+  (6, 2, 5, 'Kings Double Bacon', 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', 32.90, 1, 1, 1),
+  (7, 2, 5, 'Kings Classic', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', 19.90, 1, 1, 2),
+  (8, 2, 5, 'Kings Egg Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', 27.90, 1, 1, 3),
+  (9, 2, 5, 'Kings Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', 24.90, 1, 1, 4),
+  (10, 2, 6, 'Batata Frita 150g', 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição, São O Acompanhamento Ideal Para Hambúrgueres, Carnes e Refeições Rápidas, Ou Perfeitas Para Saborear Como Um Petisco Saboroso a Qualquer Hora Do Dia.', 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', 12.90, 1, 1, 1),
+  (11, 2, 6, 'Batata Frita 200g+ Cheddar e Bacon Crocante', '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', 17.90, 1, 1, 2),
+  (12, 2, 7, 'Coca-Cola 350ml', 'Lata 350ml estupidamente gelada.', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', 6.00, 1, 1, 1)
 ON CONFLICT (id) DO NOTHING;
 
 -- Fichas Técnicas (Receitas)
@@ -447,16 +458,49 @@ INSERT INTO recipe_items (product_id, ingredient_id, quantity) VALUES
   (1, 7, 1),   -- Copo 300ml
   (2, 1, 420), -- Acai 500ml: 420g polpa
   (2, 8, 1),   -- Copo 500ml
-  (4, 9, 1),   -- Pao brioche
-  (4, 10, 160),-- Blend 160g
-  (4, 11, 1),  -- 1 fatia cheddar
-  (4, 14, 1),  -- Embalagem burger
-  (5, 9, 1),   -- Pao brioche
-  (5, 10, 160),-- Blend 160g
-  (5, 11, 2),  -- 2 fatias cheddar
-  (5, 12, 40), -- 40g bacon
-  (5, 14, 1),  -- Embalagem burger
-  (7, 13, 150) -- Batata frita 150g
+  -- 2 King's Classic + Coca
+  (4, 9, 2),   -- 2x Pao
+  (4, 10, 320),-- 2x 160g Blend
+  (4, 12, 60), -- Cheddar
+  (4, 18, 1),  -- 1x Coca Lata
+  (4, 19, 2),  -- 2x Embalagem
+  -- Combo Double Bacon
+  (5, 9, 1),   -- Pao
+  (5, 11, 240),-- 2x 120g Blend
+  (5, 12, 40), -- Cheddar
+  (5, 13, 30), -- Bacon
+  (5, 14, 180),-- 180g Batata
+  (5, 19, 1),  -- Embalagem
+  -- Kings Double Bacon
+  (6, 9, 1),   -- Pao
+  (6, 11, 240),-- 2x 120g Blend
+  (6, 12, 40), -- Cheddar
+  (6, 13, 30), -- Bacon
+  (6, 19, 1),  -- Embalagem
+  -- Kings Classic
+  (7, 9, 1),   -- Pao
+  (7, 10, 160),-- 160g Blend
+  (7, 12, 30), -- Cheddar
+  (7, 19, 1),  -- Embalagem
+  -- Kings Egg Bacon
+  (8, 9, 1),   -- Pao
+  (8, 10, 160),-- 160g Blend
+  (8, 12, 30), -- Cheddar
+  (8, 13, 30), -- Bacon
+  (8, 16, 1),  -- 1x Ovo
+  (8, 19, 1),  -- Embalagem
+  -- Kings Bacon
+  (9, 9, 1),   -- Pao
+  (9, 10, 160),-- 160g Blend
+  (9, 12, 30), -- Cheddar
+  (9, 13, 30), -- Bacon
+  (9, 19, 1),  -- Embalagem
+  -- Batatas & Bebidas
+  (10, 14, 150), -- Batata 150g
+  (11, 14, 180), -- Batata 180g
+  (11, 12, 40),  -- Cobertura Cheddar
+  (11, 13, 25),  -- Cobertura Bacon
+  (12, 18, 1)    -- 1x Coca Lata
 ON CONFLICT (product_id, ingredient_id) DO NOTHING;
 
 -- Sincronizar Sequências do PostgreSQL para novos cadastros funcionarem

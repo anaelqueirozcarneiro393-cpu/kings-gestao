@@ -73,10 +73,11 @@ function seedDatabase() {
     const catAcaiBarca = insertCategory.run(acaiId, 'Barcas & Roletas', 2).lastInsertRowid;
     const catAcaiBebidas = insertCategory.run(acaiId, 'Bebidas Geladas', 3).lastInsertRowid;
 
-    // Categorias Burguer
-    const catBurguerArtesanal = insertCategory.run(burguerId, 'Burguers Artesanais', 1).lastInsertRowid;
-    const catBurguerAcomp = insertCategory.run(burguerId, 'Acompanhamentos & Fritas', 2).lastInsertRowid;
-    const catBurguerBebidas = insertCategory.run(burguerId, 'Bebidas & Refrigerantes', 3).lastInsertRowid;
+    // Categorias Burguer Oficiais
+    const catBurguerCombos = insertCategory.run(burguerId, 'Destaque & Combos', 1).lastInsertRowid;
+    const catBurguerArtesanal = insertCategory.run(burguerId, 'Hambúrguer Artesanal', 2).lastInsertRowid;
+    const catBurguerAcomp = insertCategory.run(burguerId, 'Acompanhamentos', 3).lastInsertRowid;
+    const catBurguerBebidas = insertCategory.run(burguerId, 'Bebidas', 4).lastInsertRowid;
 
     // Categorias Pizza (estrutura pronta para quando ativar)
     const catPizzaTrad = insertCategory.run(pizzaId, 'Pizzas Tradicionais', 1).lastInsertRowid;
@@ -169,77 +170,113 @@ function seedDatabase() {
       10
     ).lastInsertRowid;
 
-    // Produtos Burguer
-    const prodBurguerClassico = insertProduct.run(
+    // Produtos Burguer Oficiais
+    const prodComboClassic = insertProduct.run(
       burguerId,
-      catBurguerArtesanal,
-      'Clássico King',
-      'Pão brioche selado na manteiga, blend bovino 160g no ponto da casa, queijo cheddar derretido, alface fresca, tomate italiano e maionese secreta da King.',
-      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
-      26.90,
+      catBurguerCombos,
+      '2 King''s Classic + Coca 350ml',
+      '2 king''s classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml',
+      'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
+      36.90,
       1,
       1,
       1
     ).lastInsertRowid;
 
-    const prodBurguerBacon = insertProduct.run(
+    const prodComboDoubleBacon = insertProduct.run(
       burguerId,
-      catBurguerArtesanal,
-      'King Bacon',
-      'Pão brioche fofinho, blend bovino 160g suculento, fatias duplas de cheddar e generosas tiras de bacon crocante com toque de barbecue artesanal.',
-      'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80',
-      32.90,
+      catBurguerCombos,
+      'Combo Double Bacon',
+      'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon',
+      'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80',
+      39.90,
       1,
       1,
       2
     ).lastInsertRowid;
 
-    const prodBurguerEggBacon = insertProduct.run(
+    const prodDoubleBacon = insertProduct.run(
       burguerId,
       catBurguerArtesanal,
-      'Egg Bacon King',
-      'Pão brioche macio, blend bovino 160g, ovo com gema perfeita na chapa, fatias de bacon crocante, cheddar cremoso e maionese verde.',
-      'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80',
-      34.90,
+      'Kings Double Bacon',
+      'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.',
+      'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80',
+      32.90,
+      1,
+      1,
+      1
+    ).lastInsertRowid;
+
+    const prodClassic = insertProduct.run(
+      burguerId,
+      catBurguerArtesanal,
+      'Kings Classic',
+      'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.',
+      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
+      19.90,
+      1,
+      1,
+      2
+    ).lastInsertRowid;
+
+    const prodEggBacon = insertProduct.run(
+      burguerId,
+      catBurguerArtesanal,
+      'Kings Egg Bacon',
+      'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.',
+      'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80',
+      27.90,
       1,
       1,
       3
     ).lastInsertRowid;
 
-    const prodBurguerDuploBacon = insertProduct.run(
+    const prodBacon = insertProduct.run(
       burguerId,
       catBurguerArtesanal,
-      'Duplo Bacon King Especial',
-      'Para os verdadeiros carnívoros: 2x blends bovinos de 160g (320g de carne!), 4 fatias de queijo cheddar fatiado derretido e montanha de bacon crocante.',
-      'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80',
-      42.90,
+      'Kings Bacon',
+      'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.',
+      'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80',
+      24.90,
       1,
       1,
       4
     ).lastInsertRowid;
 
-    const prodBatataP = insertProduct.run(
+    const prodBatata150 = insertProduct.run(
       burguerId,
       catBurguerAcomp,
-      'Batata Frita Tradicional P',
-      '150g de batatas palito douradas, sequinhas e crocantes com sal e páprica defumada.',
+      'Batata Frita 150g',
+      'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição, São O Acompanhamento Ideal Para Hambúrgueres, Carnes e Refeições Rápidas, Ou Perfeitas Para Saborear Como Um Petisco Saboroso a Qualquer Hora Do Dia.',
       'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
-      14.00,
+      12.90,
       1,
       1,
-      5
+      1
+    ).lastInsertRowid;
+
+    const prodBatataCheddarBacon = insertProduct.run(
+      burguerId,
+      catBurguerAcomp,
+      'Batata Frita 200g+ Cheddar e Bacon Crocante',
+      '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.',
+      'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80',
+      17.90,
+      1,
+      1,
+      2
     ).lastInsertRowid;
 
     const prodCocaLata = insertProduct.run(
       burguerId,
       catBurguerBebidas,
-      'Coca-Cola Original 350ml',
+      'Coca-Cola 350ml',
       'Lata 350ml estupidamente gelada.',
       'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
-      6.50,
+      6.00,
       1,
       1,
-      6
+      1
     ).lastInsertRowid;
 
     // 5. Inserir Fichas Técnicas / Receitas
@@ -276,24 +313,28 @@ function seedDatabase() {
     insertRecipeItem.run(prodAcai700, ingTampa, 1);
     insertRecipeItem.run(prodAcai700, ingColher, 1);
 
-    // Ficha Técnica Clássico King
-    insertRecipeItem.run(prodBurguerClassico, ingPaoBrioche, 1); // R$ 1.80
-    insertRecipeItem.run(prodBurguerClassico, ingBlend160, 160); // 160g x 0.035 = R$ 5.60
-    insertRecipeItem.run(prodBurguerClassico, ingCheddar, 2); // 2 fatias x 0.80 = R$ 1.60
-    insertRecipeItem.run(prodBurguerClassico, ingMaionese, 25); // 25g x 0.015 = R$ 0.375
-    insertRecipeItem.run(prodBurguerClassico, ingEmbalagemBurguer, 1); // R$ 0.85
-    // Custo Clássico: ~ R$ 10.22 | Preço: R$ 26.90 | CMV: ~ 38.0% | Lucro Bruto: R$ 16.68
+    // Ficha Técnica 2 King's Classic + Coca
+    insertRecipeItem.run(prodComboClassic, ingPaoBrioche, 2);
+    insertRecipeItem.run(prodComboClassic, ingBlend160, 320);
+    insertRecipeItem.run(prodComboClassic, ingCheddar, 4);
+    insertRecipeItem.run(prodComboClassic, ingEmbalagemBurguer, 2);
 
-    // Ficha Técnica King Bacon
-    insertRecipeItem.run(prodBurguerBacon, ingPaoBrioche, 1);
-    insertRecipeItem.run(prodBurguerBacon, ingBlend160, 160);
-    insertRecipeItem.run(prodBurguerBacon, ingCheddar, 2);
-    insertRecipeItem.run(prodBurguerBacon, ingBacon, 50); // 50g bacon x 0.045 = R$ 2.25
-    insertRecipeItem.run(prodBurguerBacon, ingEmbalagemBurguer, 1);
+    // Ficha Técnica Kings Classic
+    insertRecipeItem.run(prodClassic, ingPaoBrioche, 1);
+    insertRecipeItem.run(prodClassic, ingBlend160, 160);
+    insertRecipeItem.run(prodClassic, ingCheddar, 2);
+    insertRecipeItem.run(prodClassic, ingEmbalagemBurguer, 1);
 
-    // Ficha Técnica Batata Frita P
-    insertRecipeItem.run(prodBatataP, ingBatataCong, 150); // 150g x 0.012 = R$ 1.80
-    insertRecipeItem.run(prodBatataP, ingEmbalagemBatata, 1); // R$ 0.40
+    // Ficha Técnica Kings Bacon
+    insertRecipeItem.run(prodBacon, ingPaoBrioche, 1);
+    insertRecipeItem.run(prodBacon, ingBlend160, 160);
+    insertRecipeItem.run(prodBacon, ingCheddar, 2);
+    insertRecipeItem.run(prodBacon, ingBacon, 50);
+    insertRecipeItem.run(prodBacon, ingEmbalagemBurguer, 1);
+
+    // Ficha Técnica Batata Frita
+    insertRecipeItem.run(prodBatata150, ingBatataCong, 150);
+    insertRecipeItem.run(prodBatata150, ingEmbalagemBatata, 1);
 
     // 6. Inserir Grupos de Adicionais e Adicionais
     // Requisito 8: Açaí 500ml: 4 complementos grátis, depois pagos (Leite em pó, morango, nutella...)
