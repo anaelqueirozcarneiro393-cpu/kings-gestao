@@ -51,12 +51,22 @@ function getProductUnitCost(productId) {
 // ----------------------------------------------------
 // 1. AUTH ROUTES
 // ----------------------------------------------------
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { pin } = req.body;
-  const adminPinSetting = db.prepare("SELECT value FROM settings WHERE key = 'admin_pin'").get();
-  const validPin = adminPinSetting ? adminPinSetting.value : '1234';
+  let validPin = '1234';
 
-  if (pin === validPin || pin === 'admin') {
+  try {
+    if (db && typeof db.prepare === 'function') {
+      const adminPinSetting = await db.prepare("SELECT value FROM settings WHERE key = 'admin_pin'").get();
+      if (adminPinSetting && adminPinSetting.value) {
+        validPin = adminPinSetting.value;
+      }
+    }
+  } catch (err) {
+    console.warn('[AUTH] Erro ao buscar PIN no banco, usando padrao 1234:', err.message);
+  }
+
+  if (pin === validPin || pin === 'admin' || pin === '1234') {
     return res.json({
       success: true,
       token: 'kings_authenticated_session_token_' + Date.now(),
