@@ -406,15 +406,6 @@ async function initSchema() {
           created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
         );
 
-        -- DESABILITA RLS NO SUPABASE
-        ALTER TABLE businesses DISABLE ROW LEVEL SECURITY;
-        ALTER TABLE categories DISABLE ROW LEVEL SECURITY;
-        ALTER TABLE products DISABLE ROW LEVEL SECURITY;
-        ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
-        ALTER TABLE order_items DISABLE ROW LEVEL SECURITY;
-        ALTER TABLE coupons DISABLE ROW LEVEL SECURITY;
-        ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
-
         -- SEED DAS OPERAÇÕES DA MARCA KING'S (Açaí e Burguer abertos, Pizza em breve)
         INSERT INTO businesses (id, name, slug, tagline, icon, color, active, status, is_manually_closed, opening_time, closing_time, min_order, delivery_fee, address, phone, instagram)
         VALUES 
@@ -461,6 +452,10 @@ async function initSchema() {
           ('whatsapp_notification_phone', '5511999999999'),
           ('default_delivery_fee', '5.00')
         ON CONFLICT (key) DO NOTHING;
+
+        -- Ajustar sequences para que auto-increment não tente usar IDs manuais já inseridos
+        SELECT setval('products_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 200) FROM products));
+        SELECT setval('categories_id_seq', (SELECT GREATEST(COALESCE(MAX(id), 1), 50) FROM categories));
       `);
       console.log('[DB] Schema e dados oficiais sincronizados com sucesso.');
     } else if (sqliteDb) {
@@ -491,6 +486,26 @@ async function initSchema() {
       } catch (e) {
         // Coluna já existe
       }
+
+      // Sincroniza produtos do Burguer no SQLite local se faltarem
+      try {
+        const prodCount = sqliteDb.prepare('SELECT count(*) as c FROM products WHERE business_id = 2').get();
+        if (!prodCount || prodCount.c === 0) {
+          const insertProd = sqliteDb.prepare(`
+            INSERT OR IGNORE INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          insertProd.run(101, 2, 10, "2 King's Classic + Coca 350ml", "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml", 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', 36.90, 1, 1, 1);
+          insertProd.run(102, 2, 10, 'Combo Double Bacon', 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', 39.90, 1, 1, 2);
+          insertProd.run(103, 2, 11, 'Kings Double Bacon', 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', 32.90, 1, 1, 1);
+          insertProd.run(104, 2, 11, 'Kings Classic', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', 19.90, 1, 1, 2);
+          insertProd.run(105, 2, 11, 'Kings Egg Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', 27.90, 1, 1, 3);
+          insertProd.run(106, 2, 11, 'Kings Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', 24.90, 1, 1, 4);
+          insertProd.run(107, 2, 12, 'Batata Frita 150g', 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', 12.90, 1, 1, 1);
+          insertProd.run(108, 2, 12, 'Batata Frita 200g+ Cheddar e Bacon Crocante', '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', 17.90, 1, 1, 2);
+          insertProd.run(109, 2, 13, 'Coca-Cola 350ml', 'Lata 350ml estupidamente gelada.', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', 6.00, 1, 1, 1);
+        }
+      } catch (e) {}
     }
   } catch (err) {
     console.warn('[DB INIT SCHEMA]', err.message);

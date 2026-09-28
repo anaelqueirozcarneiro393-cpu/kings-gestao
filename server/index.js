@@ -886,10 +886,75 @@ app.patch('/api/orders/:id/payment', async (req, res) => {
 });
 
 // ----------------------------------------------------
-// 5. PRODUCTS CRUD
+// 5. PRODUCTS & CATEGORIES CRUD (COM PERSISTÊNCIA DIRETA)
 // ----------------------------------------------------
+
+let isSeedingDatabase = false;
+async function ensureDatabaseSeeded() {
+  if (isSeedingDatabase) return;
+  try {
+    isSeedingDatabase = true;
+    const check = await db.prepare("SELECT value FROM settings WHERE key = 'database_seeded'").get();
+    if (check && check.value === '1') {
+      return;
+    }
+
+    // 1. Sincroniza Categorias Oficiais (garante que IDs 1, 2, 10, 11, 12, 13 existam antes dos produtos)
+    const categories = [
+      { id: 1, business_id: 1, name: 'Açaí no Copo', order_index: 1, active: 1 },
+      { id: 2, business_id: 1, name: 'Barcas & Roletas', order_index: 2, active: 1 },
+      { id: 10, business_id: 2, name: 'Destaque & Combos', order_index: 1, active: 1 },
+      { id: 11, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 2, active: 1 },
+      { id: 12, business_id: 2, name: 'Acompanhamentos', order_index: 3, active: 1 },
+      { id: 13, business_id: 2, name: 'Bebidas', order_index: 4, active: 1 }
+    ];
+    for (const c of categories) {
+      try {
+        await db.prepare('INSERT INTO categories (id, business_id, name, order_index, active) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING').run(
+          c.id, c.business_id, c.name, c.order_index, c.active
+        );
+      } catch (e) {}
+    }
+
+    // 2. Sincroniza Produtos Oficiais se a operação 2 ainda não tiver produtos cadastrados
+    const burguerCount = await db.prepare('SELECT count(*) as c FROM products WHERE business_id = 2').get();
+    if (!burguerCount || Number(burguerCount.c) === 0) {
+      const products = [
+        { id: 101, business_id: 2, category_id: 10, name: "2 King's Classic + Coca 350ml", description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml", image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', price: 36.90, active: 1, availability: 1, order_index: 1 },
+        { id: 102, business_id: 2, category_id: 10, name: 'Combo Double Bacon', description: 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', price: 39.90, active: 1, availability: 1, order_index: 2 },
+        { id: 103, business_id: 2, category_id: 11, name: 'Kings Double Bacon', description: 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', price: 32.90, active: 1, availability: 1, order_index: 1 },
+        { id: 104, business_id: 2, category_id: 11, name: 'Kings Classic', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', price: 19.90, active: 1, availability: 1, order_index: 2 },
+        { id: 105, business_id: 2, category_id: 11, name: 'Kings Egg Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', price: 27.90, active: 1, availability: 1, order_index: 3 },
+        { id: 106, business_id: 2, category_id: 11, name: 'Kings Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', price: 24.90, active: 1, availability: 1, order_index: 4 },
+        { id: 107, business_id: 2, category_id: 12, name: 'Batata Frita 150g', description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', price: 12.90, active: 1, availability: 1, order_index: 1 },
+        { id: 108, business_id: 2, category_id: 12, name: 'Batata Frita 200g+ Cheddar e Bacon Crocante', description: '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', price: 17.90, active: 1, availability: 1, order_index: 2 },
+        { id: 109, business_id: 2, category_id: 13, name: 'Coca-Cola 350ml', description: 'Lata 350ml estupidamente gelada.', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', price: 6.00, active: 1, availability: 1, order_index: 1 }
+      ];
+
+      for (const p of products) {
+        try {
+          await db.prepare(`
+            INSERT INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (id) DO NOTHING
+          `).run(p.id, p.business_id, p.category_id, p.name, p.description, p.image_url, p.price, p.active, p.availability, p.order_index);
+        } catch (e) {}
+      }
+    }
+
+    try {
+      await db.prepare("INSERT INTO settings (key, value) VALUES ('database_seeded', '1') ON CONFLICT (key) DO UPDATE SET value = '1'").run();
+    } catch (e) {}
+  } catch (err) {
+    console.warn('[ENSURE DATABASE SEEDED]', err.message);
+  } finally {
+    isSeedingDatabase = false;
+  }
+}
+
 app.get('/api/products', async (req, res) => {
   try {
+    await ensureDatabaseSeeded();
     const { business_id } = req.query;
     let query = `
       SELECT p.*, b.name as business_name, c.name as category_name
@@ -910,28 +975,10 @@ app.get('/api/products', async (req, res) => {
     try {
       products = await db.prepare(query).all(...params);
     } catch (queryErr) {
-      console.warn('[PRODUCTS QUERY FAILED, USING FALLBACK]', queryErr.message);
+      console.warn('[PRODUCTS QUERY FAILED]', queryErr.message);
     }
 
     let list = Array.isArray(products) ? products : [];
-
-    // Se o banco ainda não tiver os produtos e for do King's Burguer (ou geral), use os produtos oficiais
-    if (list.length === 0) {
-      const allOfficial = [
-        { id: 1, business_id: 1, category_id: 1, category_name: 'Açaí no Copo', business_name: "KING'S AÇAÍ", name: 'Açaí no Copo 300ml', description: 'Copo de 300ml montado com nosso açaí cremoso batido na hora com xarope natural.', image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', price: 16.90, active: 1, availability: 1, order_index: 1 },
-        { id: 2, business_id: 1, category_id: 1, category_name: 'Açaí no Copo', business_name: "KING'S AÇAÍ", name: 'Açaí no Copo 500ml', description: 'O clássico mais pedido! 500ml de puro açaí cremoso com camadas generosas de complementos.', image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', price: 22.90, active: 1, availability: 1, order_index: 2 },
-        { id: 101, business_id: 2, category_id: 10, category_name: 'Destaque & Combos', business_name: "KING'S BURGUER", name: "2 King's Classic + Coca 350ml", description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml", image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', price: 36.90, active: 1, availability: 1, order_index: 1 },
-        { id: 102, business_id: 2, category_id: 10, category_name: 'Destaque & Combos', business_name: "KING'S BURGUER", name: 'Combo Double Bacon', description: 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', price: 39.90, active: 1, availability: 1, order_index: 2 },
-        { id: 103, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Double Bacon', description: 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', price: 32.90, active: 1, availability: 1, order_index: 1 },
-        { id: 104, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Classic', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', price: 19.90, active: 1, availability: 1, order_index: 2 },
-        { id: 105, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Egg Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', price: 27.90, active: 1, availability: 1, order_index: 3 },
-        { id: 106, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal', business_name: "KING'S BURGUER", name: 'Kings Bacon', description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', image_url: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', price: 24.90, active: 1, availability: 1, order_index: 4 },
-        { id: 107, business_id: 2, category_id: 12, category_name: 'Acompanhamentos', business_name: "KING'S BURGUER", name: 'Batata Frita 150g', description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', price: 12.90, active: 1, availability: 1, order_index: 1 },
-        { id: 108, business_id: 2, category_id: 12, category_name: 'Acompanhamentos', business_name: "KING'S BURGUER", name: 'Batata Frita 200g+ Cheddar e Bacon Crocante', description: '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', price: 17.90, active: 1, availability: 1, order_index: 2 },
-        { id: 109, business_id: 2, category_id: 13, category_name: 'Bebidas', business_name: "KING'S BURGUER", name: 'Coca-Cola 350ml', description: 'Lata 350ml estupidamente gelada.', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', price: 6.00, active: 1, availability: 1, order_index: 1 }
-      ];
-      list = business_id ? allOfficial.filter(p => p.business_id === Number(business_id)) : allOfficial;
-    }
 
     // Calculate live unit cost, CMV R$, and CMV % for each product
     const enriched = await Promise.all(list.map(async (prod) => {
@@ -993,24 +1040,54 @@ app.post('/api/products', async (req, res) => {
 app.put('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { category_id, name, description, image_url, price, active, availability, order_index } = req.body;
+    const { business_id, category_id, name, description, image_url, price, active, availability, order_index } = req.body;
 
-    await db.prepare(`
-      UPDATE products SET
-        category_id = COALESCE(?, category_id),
-        name = COALESCE(?, name),
-        description = COALESCE(?, description),
-        image_url = COALESCE(?, image_url),
-        price = COALESCE(?, price),
-        active = COALESCE(?, active),
-        availability = COALESCE(?, availability),
-        order_index = COALESCE(?, order_index)
-      WHERE id = ?
-    `).run(
-      category_id, name, description, image_url,
-      price !== undefined ? Number(price) : null,
-      active, availability, order_index, id
-    );
+    // Verificar se o produto já existe no banco
+    let current = await db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+
+    if (!current) {
+      // Se ainda não existir no banco, insere diretamente com o ID correspondente
+      await db.prepare(`
+        INSERT INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id,
+        business_id || 2,
+        category_id ? Number(category_id) : null,
+        name || 'Produto',
+        description || '',
+        image_url || '',
+        price !== undefined ? Number(price) : 0,
+        active !== undefined ? active : 1,
+        availability !== undefined ? availability : 1,
+        order_index !== undefined ? Number(order_index) : 1
+      );
+    } else {
+      const newCategoryId = category_id !== undefined ? (category_id ? Number(category_id) : null) : current.category_id;
+      const newName = name !== undefined ? name : current.name;
+      const newDescription = description !== undefined ? description : current.description;
+      const newImageUrl = image_url !== undefined ? image_url : current.image_url;
+      const newPrice = price !== undefined ? Number(price) : current.price;
+      const newActive = active !== undefined ? active : current.active;
+      const newAvailability = availability !== undefined ? availability : current.availability;
+      const newOrderIndex = order_index !== undefined ? Number(order_index) : current.order_index;
+
+      await db.prepare(`
+        UPDATE products SET
+          category_id = ?,
+          name = ?,
+          description = ?,
+          image_url = ?,
+          price = ?,
+          active = ?,
+          availability = ?,
+          order_index = ?
+        WHERE id = ?
+      `).run(
+        newCategoryId, newName, newDescription, newImageUrl,
+        newPrice, newActive, newAvailability, newOrderIndex, id
+      );
+    }
 
     const updated = await db.prepare('SELECT * FROM products WHERE id = ?').get(id);
     res.json(updated);
@@ -1023,6 +1100,7 @@ app.put('/api/products/:id', async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    await ensureDatabaseSeeded();
     await db.prepare('DELETE FROM products WHERE id = ?').run(id);
     res.json({ success: true });
   } catch (err) {
@@ -1036,6 +1114,7 @@ app.delete('/api/products/:id', async (req, res) => {
 // ----------------------------------------------------
 app.get('/api/categories', async (req, res) => {
   try {
+    await ensureDatabaseSeeded();
     const { business_id } = req.query;
     let sql = 'SELECT * FROM categories';
     const params = [];
@@ -1048,22 +1127,10 @@ app.get('/api/categories', async (req, res) => {
     try {
       rows = await db.prepare(sql).all(...params);
     } catch (queryErr) {
-      console.warn('[CATEGORIES QUERY FAILED, USING FALLBACK]', queryErr.message);
+      console.warn('[CATEGORIES QUERY FAILED]', queryErr.message);
     }
 
-    let list = Array.isArray(rows) ? rows : [];
-    if (list.length === 0) {
-      const allOfficialCategories = [
-        { id: 1, business_id: 1, name: 'Açaí no Copo', order_index: 1, active: 1 },
-        { id: 2, business_id: 1, name: 'Barcas & Roletas', order_index: 2, active: 1 },
-        { id: 10, business_id: 2, name: 'Destaque & Combos', order_index: 1, active: 1 },
-        { id: 11, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 2, active: 1 },
-        { id: 12, business_id: 2, name: 'Acompanhamentos', order_index: 3, active: 1 },
-        { id: 13, business_id: 2, name: 'Bebidas', order_index: 4, active: 1 }
-      ];
-      list = business_id ? allOfficialCategories.filter(c => c.business_id === Number(business_id)) : allOfficialCategories;
-    }
-    res.json(list);
+    res.json(Array.isArray(rows) ? rows : []);
   } catch (err) {
     console.error('[API CATEGORIES ERROR]', err);
     res.json([]);
@@ -1089,14 +1156,27 @@ app.post('/api/categories', async (req, res) => {
 app.put('/api/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, order_index, active } = req.body;
-    await db.prepare(`
-      UPDATE categories SET
-        name = COALESCE(?, name),
-        order_index = COALESCE(?, order_index),
-        active = COALESCE(?, active)
-      WHERE id = ?
-    `).run(name, order_index, active, id);
+    const { business_id, name, order_index, active } = req.body;
+
+    let current = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
+    if (!current) {
+      await db.prepare('INSERT INTO categories (id, business_id, name, order_index, active) VALUES (?, ?, ?, ?, ?)').run(
+        id, business_id || 2, name || 'Categoria', order_index !== undefined ? Number(order_index) : 1, active !== undefined ? active : 1
+      );
+    } else {
+      const newName = name !== undefined ? name : current.name;
+      const newOrderIndex = order_index !== undefined ? Number(order_index) : current.order_index;
+      const newActive = active !== undefined ? active : current.active;
+
+      await db.prepare(`
+        UPDATE categories SET
+          name = ?,
+          order_index = ?,
+          active = ?
+        WHERE id = ?
+      `).run(newName, newOrderIndex, newActive, id);
+    }
+
     const updated = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
     res.json(updated);
   } catch (err) {
@@ -1107,6 +1187,7 @@ app.put('/api/categories/:id', async (req, res) => {
 app.delete('/api/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    await ensureDatabaseSeeded();
     await db.prepare('DELETE FROM categories WHERE id = ?').run(id);
     res.json({ success: true });
   } catch (err) {
