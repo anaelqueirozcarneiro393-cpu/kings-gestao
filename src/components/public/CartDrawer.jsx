@@ -110,20 +110,8 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
     setTimeout(() => setCopiedPix(false), 2000);
   };
 
-  // Catálogo de Order Bumps para Açaí e Burguer
+  // Catálogo de Order Bumps Estratégicos com Alta Percepção de Vantagem / Desconto
   const ORDER_BUMP_CATALOG = [
-    {
-      id: 'bump_coca',
-      product_id: 109,
-      business_id: 2,
-      business_name: "KING'S BURGUER",
-      business_slug: 'burguer',
-      name: 'Coca-Cola 350ml Geladinha',
-      subtitle: 'Lata 350ml trincando de gelada',
-      price: 6.00,
-      image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
-      icon: '🥤'
-    },
     {
       id: 'bump_batata',
       product_id: 107,
@@ -131,10 +119,28 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
       business_name: "KING'S BURGUER",
       business_slug: 'burguer',
       name: 'Batata Frita 150g Crocante',
-      subtitle: 'Sequinha e dourada à perfeição',
-      price: 12.90,
+      subtitle: 'Dourada e sequinha à perfeição',
+      original_price: 14.90,
+      price: 8.90,
+      badge: '40% OFF',
+      savings: 'Economize R$ 6,00 agora',
       image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
       icon: '🍟'
+    },
+    {
+      id: 'bump_coca',
+      product_id: 109,
+      business_id: 2,
+      business_name: "KING'S BURGUER",
+      business_slug: 'burguer',
+      name: 'Coca-Cola 350ml Geladinha',
+      subtitle: 'Lata trincando de gelada',
+      original_price: 8.00,
+      price: 5.90,
+      badge: 'MAIS PEDIDO',
+      savings: 'Desconto de combo',
+      image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
+      icon: '🥤'
     },
     {
       id: 'bump_cheddar_bacon',
@@ -144,9 +150,27 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
       business_slug: 'burguer',
       name: 'Batata 200g + Cheddar & Bacon',
       subtitle: 'Batata coberta com cheddar cremoso e bacon',
-      price: 17.90,
+      original_price: 22.90,
+      price: 15.90,
+      badge: '30% OFF',
+      savings: 'Economize R$ 7,00',
       image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80',
       icon: '🥓'
+    },
+    {
+      id: 'bump_maionese',
+      product_id: 204,
+      business_id: 2,
+      business_name: "KING'S BURGUER",
+      business_slug: 'burguer',
+      name: 'Pote Maionese Artesanal da Casa (50ml)',
+      subtitle: 'Nossa receita especial verde temperada',
+      original_price: 5.00,
+      price: 2.90,
+      badge: 'RECEITA DO CHEF',
+      savings: 'Perfeita para molhar o burguer',
+      image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80',
+      icon: '🥫'
     },
     {
       id: 'bump_nutella',
@@ -154,9 +178,12 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
       business_id: 1,
       business_name: "KING'S AÇAÍ",
       business_slug: 'acai',
-      name: 'Pote Extra Nutella Pura 50g',
-      subtitle: 'Creme de avelã para turbinar seu açaí',
-      price: 6.00,
+      name: 'Pote Extra Nutella Original 50g',
+      subtitle: 'Creme de avelã puro para turbinar seu açaí',
+      original_price: 8.50,
+      price: 4.90,
+      badge: '42% OFF',
+      savings: 'Economize R$ 3,60 levando agora',
       image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80',
       icon: '🍫'
     },
@@ -166,9 +193,12 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
       business_id: 1,
       business_name: "KING'S AÇAÍ",
       business_slug: 'acai',
-      name: 'Porção Extra Morangos Frescos',
-      subtitle: 'Morangos selecionados fatiados',
-      price: 5.00,
+      name: 'Porção Extra Morangos Frescos Fatiados',
+      subtitle: 'Fruta fresca selecionada e fatiada na hora',
+      original_price: 7.00,
+      price: 3.90,
+      badge: 'FAVORITO',
+      savings: 'Combinação perfeita',
       image_url: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80',
       icon: '🍓'
     },
@@ -180,7 +210,10 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
       business_slug: 'acai',
       name: 'Água Mineral Crystal 500ml',
       subtitle: 'Geladinha e refrescante',
-      price: 4.00,
+      original_price: 5.00,
+      price: 3.50,
+      badge: 'OFERTA',
+      savings: 'Refrescância garantida',
       image_url: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=600&q=80',
       icon: '💧'
     }
@@ -374,31 +407,53 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
                       </span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {availableBumps.map(bump => (
                         <div
                           key={bump.id}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-slate-900/80 to-slate-900 border border-amber-500/30 hover:border-amber-500/60 transition-all duration-200"
+                          className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-900/90 to-slate-900 border border-amber-500/30 hover:border-amber-500/60 transition-all duration-200 shadow-sm"
                         >
-                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                            <span className="text-xl flex-shrink-0">{bump.icon}</span>
-                            <div className="min-w-0">
-                              <div className="text-xs font-bold text-slate-100 truncate">{bump.name}</div>
-                              <div className="text-[10px] text-slate-400 truncate">{bump.subtitle}</div>
-                              <div className="text-xs font-semibold text-emerald-400 mt-0.5">
-                                + {formatCurrency(bump.price)}
+                          <div className="flex items-center justify-between gap-2.5">
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <span className="text-2xl flex-shrink-0 mt-0.5">{bump.icon}</span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-xs font-bold text-slate-100">{bump.name}</span>
+                                  {bump.badge && (
+                                    <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                      {bump.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-0.5 truncate">{bump.subtitle}</div>
+                                
+                                <div className="flex items-center gap-2 mt-1">
+                                  {bump.original_price && (
+                                    <span className="text-[11px] line-through text-slate-500 font-mono">
+                                      {formatCurrency(bump.original_price)}
+                                    </span>
+                                  )}
+                                  <span className="text-xs font-black text-emerald-400 font-mono">
+                                    {formatCurrency(bump.price)}
+                                  </span>
+                                  {bump.savings && (
+                                    <span className="text-[10px] font-semibold text-emerald-300/90 bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                                      {bump.savings}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleAddBump(bump)}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow-sm active:scale-95 transition-all whitespace-nowrap cursor-pointer"
-                          >
-                            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                            <span>Adicionar</span>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAddBump(bump)}
+                              className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 text-xs font-extrabold rounded-xl shadow-md shadow-amber-500/20 active:scale-95 transition-all whitespace-nowrap cursor-pointer shrink-0"
+                            >
+                              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                              <span>Adicionar</span>
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

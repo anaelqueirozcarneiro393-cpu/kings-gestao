@@ -111,12 +111,17 @@ export function ProductModal({ product, business, isOpen, onClose, onAddToCart }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-sm">
+      <div className="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+        {/* Mobile Drag Indicator */}
+        <div className="sm:hidden pt-2.5 pb-1 flex justify-center bg-slate-900 shrink-0">
+          <div className="w-12 h-1.5 bg-slate-700/80 rounded-full" />
+        </div>
+
         {/* Header com imagem se houver */}
-        <div className="relative">
+        <div className="relative shrink-0">
           {product.image_url ? (
-            <div className="h-48 w-full bg-slate-950 overflow-hidden">
+            <div className="h-44 sm:h-48 w-full bg-slate-950 overflow-hidden">
               <img
                 src={product.image_url}
                 alt={product.name}
@@ -125,23 +130,23 @@ export function ProductModal({ product, business, isOpen, onClose, onAddToCart }
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/60" />
             </div>
           ) : (
-            <div className="h-20 bg-gradient-to-r from-amber-600/20 to-slate-900 border-b border-slate-800" />
+            <div className="h-16 sm:h-20 bg-gradient-to-r from-amber-600/20 to-slate-900 border-b border-slate-800" />
           )}
 
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/90 transition-colors backdrop-blur-sm cursor-pointer"
+            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/90 transition-colors backdrop-blur-sm cursor-pointer z-10"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Informações do Produto */}
-        <div className="p-5 overflow-y-auto space-y-5 flex-1">
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-4 sm:space-y-5 flex-1">
           <div>
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-bold text-slate-100">{product.name}</h2>
-              <span className="text-base font-bold text-amber-400 font-mono whitespace-nowrap">
+              <h2 className="text-base sm:text-lg font-bold text-slate-100">{product.name}</h2>
+              <span className="text-base sm:text-lg font-bold text-amber-400 font-mono whitespace-nowrap">
                 {formatCurrency(product.price)}
               </span>
             </div>
@@ -172,33 +177,65 @@ export function ProductModal({ product, business, isOpen, onClose, onAddToCart }
                   )}
                 </div>
 
-                {/* Banner de Adicionais Grátis para Açaí */}
+                {/* Banner Gamificado de Adicionais Grátis para Açaí */}
                 {freeLimit > 0 && (
-                  <div className="bg-emerald-950/50 border border-emerald-500/40 rounded-xl p-2.5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-emerald-300">
-                      <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <div>
-                        <span className="font-bold">{freeLimit} Adicionais Grátis inclusos!</span>
-                        <p className="text-[10px] text-slate-400">
-                          {selectedCount < freeLimit
-                            ? `Você ainda tem direito a mais ${freeLimit - selectedCount} adicionais grátis!`
-                            : selectedCount === freeLimit
-                            ? 'Você atingiu o limite dos 4 grátis. Adicionais extras serão cobrados.'
-                            : `4 grátis + ${selectedCount - freeLimit} extra(s) pago(s)`}
-                        </p>
+                  <div className="bg-gradient-to-r from-emerald-950/70 via-slate-900 to-emerald-950/50 border border-emerald-500/40 rounded-2xl p-3.5 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">🎁</span>
+                        <div>
+                          <div className="text-xs font-black text-emerald-300 uppercase tracking-wide">
+                            {freeLimit} Complementos Grátis Inclusos!
+                          </div>
+                          <div className="text-[10px] text-emerald-400/80 font-medium">
+                            Economize até R$ 16,00 nesta etapa
+                          </div>
+                        </div>
                       </div>
+                      <span className="text-xs font-mono font-black text-emerald-300 bg-emerald-900/80 px-2.5 py-1 rounded-xl border border-emerald-500/40">
+                        {Math.min(selectedCount, freeLimit)} / {freeLimit} Grátis
+                      </span>
                     </div>
-                    <span className="font-mono text-emerald-300 font-extrabold text-[11px] bg-emerald-900/80 px-2 py-0.5 rounded-lg border border-emerald-500/30 shrink-0">
-                      {Math.min(selectedCount, freeLimit)}/{freeLimit} grátis
-                    </span>
+
+                    {/* Barra de 4 Slots Visuais */}
+                    <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+                      {Array.from({ length: freeLimit }).map((_, idx) => {
+                        const isFilled = idx < selectedCount;
+                        return (
+                          <div
+                            key={idx}
+                            className={`h-7 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all ${
+                              isFilled
+                                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 font-black'
+                                : 'bg-slate-950/80 border border-dashed border-emerald-500/30 text-emerald-400/60'
+                            }`}
+                          >
+                            {isFilled ? '✓ Grátis' : `${idx + 1}º livre`}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <p className="text-[10px] text-slate-400">
+                      {selectedCount < freeLimit
+                        ? `✨ Escolha mais ${freeLimit - selectedCount} complemento(s) sem pagar nada a mais!`
+                        : selectedCount === freeLimit
+                        ? '🎉 Todos os 4 complementos grátis preenchidos! Próximos adicionais são cobrados com valor promocional.'
+                        : `⭐ 4 grátis garantidos + ${selectedCount - freeLimit} extra(s) pago(s)`}
+                    </p>
                   </div>
                 )}
 
-                {/* Mensagem informativa para Hambúrguer (todos adicionais pagos) */}
+                {/* Mensagem de Vantagem / Dica do Chef para Hambúrguer */}
                 {freeLimit === 0 && (
-                  <div className="text-[11px] text-amber-400/90 font-medium flex items-center gap-1.5">
-                    <span>✨</span>
-                    <span>Turbine seu lanche (adicionais extras cobrados à parte)</span>
+                  <div className="bg-gradient-to-r from-amber-500/10 via-slate-900 to-amber-500/5 border border-amber-500/30 rounded-2xl p-3 flex items-center gap-2.5">
+                    <span className="text-xl">🔥</span>
+                    <div className="text-[11px] leading-tight">
+                      <span className="font-bold text-amber-300 block">Dica do Chef King's:</span>
+                      <span className="text-slate-400">
+                        Turbine com Blend Extra ou Bacon Crocante para uma experiência gourmet inesquecível!
+                      </span>
+                    </div>
                   </div>
                 )}
 
@@ -283,14 +320,14 @@ export function ProductModal({ product, business, isOpen, onClose, onAddToCart }
           </div>
         </div>
 
-        {/* Footer com Quantidade e Botão Adicionar */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between gap-3">
+        {/* Footer com Quantidade e Botão Adicionar - Fixo na base para mobile */}
+        <div className="p-3 sm:p-4 border-t border-slate-800 bg-slate-950/95 backdrop-blur-md flex items-center justify-between gap-2.5 sm:gap-3 sticky bottom-0 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           {/* Seletor de Quantidade */}
-          <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-1 rounded-xl">
+          <div className="flex items-center gap-1 sm:gap-2 bg-slate-900 border border-slate-800 p-1 rounded-xl shrink-0">
             <button
               type="button"
               onClick={() => setQuantity(q => Math.max(1, q - 1))}
-              className="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
             >
               <Minus className="w-3.5 h-3.5" />
             </button>
@@ -298,7 +335,7 @@ export function ProductModal({ product, business, isOpen, onClose, onAddToCart }
             <button
               type="button"
               onClick={() => setQuantity(q => q + 1)}
-              className="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -308,10 +345,10 @@ export function ProductModal({ product, business, isOpen, onClose, onAddToCart }
           <button
             type="button"
             onClick={handleConfirm}
-            className="flex-1 flex items-center justify-between px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+            className="flex-1 flex items-center justify-between px-4 sm:px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
           >
             <span>Adicionar ao Pedido</span>
-            <span className="font-mono text-sm">{formatCurrency(totalPrice)}</span>
+            <span className="font-mono text-xs sm:text-sm">{formatCurrency(totalPrice)}</span>
           </button>
         </div>
       </div>
