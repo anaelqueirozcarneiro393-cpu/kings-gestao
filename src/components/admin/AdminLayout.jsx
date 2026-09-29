@@ -39,15 +39,18 @@ export function AdminLayout({
   const { user, logout } = useAuth();
   const [businesses, setBusinesses] = useState([]);
   const [newOrdersCount, setNewOrdersCount] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    return localStorage.getItem('kings_sound_enabled') !== 'false';
+  });
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
-  const prevCountRef = useRef(0);
+  const isInitialLoadRef = useRef(true);
+  const knownOrderIdsRef = useRef(new Set());
 
   useEffect(() => {
     loadBusinesses();
     checkNewOrders();
-    const interval = setInterval(checkNewOrders, 6000); // 6s polling for incoming orders
+    const interval = setInterval(checkNewOrders, 5000); // 5s polling for incoming orders
     const clockInterval = setInterval(() => {
       const now = new Date();
       setCurrentTime(now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
@@ -57,7 +60,7 @@ export function AdminLayout({
       clearInterval(interval);
       clearInterval(clockInterval);
     };
-  }, []);
+  }, [soundEnabled]);
 
   const loadBusinesses = async () => {
     try {
@@ -71,15 +74,21 @@ export function AdminLayout({
   const checkNewOrders = async () => {
     try {
       const orders = await api.getOrders({ status: 'novo' });
-      const count = orders.length;
+      const list = Array.isArray(orders) ? orders : [];
+      const currentIds = new Set(list.map(o => o.id));
 
-      if (count > prevCountRef.current && prevCountRef.current !== 0) {
-        if (soundEnabled) {
+      if (!isInitialLoadRef.current) {
+        // Dispara o alerta sonoro se chegou algum pedido novo que não estava registrado
+        const hasNewOrder = list.some(o => !knownOrderIdsRef.current.has(o.id));
+        if (hasNewOrder && soundEnabled) {
           playNewOrderChime();
         }
+      } else {
+        isInitialLoadRef.current = false;
       }
-      prevCountRef.current = count;
-      setNewOrdersCount(count);
+
+      knownOrderIdsRef.current = currentIds;
+      setNewOrdersCount(list.length);
     } catch (err) {
       console.error(err);
     }
@@ -207,6 +216,7 @@ export function AdminLayout({
               onClick={() => {
                 const next = !soundEnabled;
                 setSoundEnabled(next);
+                localStorage.setItem('kings_sound_enabled', String(next));
                 if (next) playNewOrderChime();
               }}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
