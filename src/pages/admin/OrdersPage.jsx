@@ -409,7 +409,7 @@ export function OrdersPage({ selectedBusinessId }) {
                         <option value="">Selecione o Motoboy para despachar...</option>
                         {couriers.map(c => (
                           <option key={c.id} value={c.id}>
-                            {c.name} {c.phone ? `(${c.phone})` : ''} — Taxa: R$ {c.fee_per_delivery.toFixed(2)}
+                            {c.name} {c.phone ? `(${c.phone})` : ''} — Taxa: R$ {Number(c.fee_per_delivery || 0).toFixed(2)}
                           </option>
                         ))}
                       </select>

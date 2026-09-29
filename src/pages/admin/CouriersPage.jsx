@@ -23,9 +23,10 @@ export function CouriersPage() {
     setLoading(true);
     try {
       const data = await api.getCouriers();
-      setCouriers(data);
+      setCouriers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+      setCouriers([]);
     } finally {
       setLoading(false);
     }
@@ -44,8 +45,8 @@ export function CouriersPage() {
     setEditingCourier(courier);
     setName(courier.name);
     setPhone(courier.phone || '');
-    setDailyFee(courier.daily_fee.toString());
-    setFeePerDelivery(courier.fee_per_delivery.toString());
+    setDailyFee(courier.daily_fee !== undefined && courier.daily_fee !== null ? String(courier.daily_fee) : '50.00');
+    setFeePerDelivery(courier.fee_per_delivery !== undefined && courier.fee_per_delivery !== null ? String(courier.fee_per_delivery) : '4.00');
     setIsModalOpen(true);
   };
 
@@ -87,8 +88,9 @@ export function CouriersPage() {
     }
   };
 
-  const totalDeliveriesToday = couriers.reduce((acc, c) => acc + (c.today_deliveries || 0), 0);
-  const totalPayoutToday = couriers.reduce((acc, c) => acc + (c.today_earnings || 0), 0);
+  const couriersList = Array.isArray(couriers) ? couriers : [];
+  const totalDeliveriesToday = couriersList.reduce((acc, c) => acc + (Number(c.today_deliveries) || 0), 0);
+  const totalPayoutToday = couriersList.reduce((acc, c) => acc + (Number(c.today_earnings) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -198,11 +200,11 @@ export function CouriersPage() {
                   <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-slate-900/60 border border-slate-850 text-xs mb-4">
                     <div>
                       <span className="text-[10px] text-slate-500 uppercase block font-semibold">Diária Fixa</span>
-                      <span className="font-mono font-bold text-slate-200">R$ {courier.daily_fee.toFixed(2)}</span>
+                      <span className="font-mono font-bold text-slate-200">R$ {Number(courier.daily_fee || 0).toFixed(2)}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-500 uppercase block font-semibold">Por Entrega</span>
-                      <span className="font-mono font-bold text-slate-200">+ R$ {courier.fee_per_delivery.toFixed(2)}</span>
+                      <span className="font-mono font-bold text-slate-200">+ R$ {Number(courier.fee_per_delivery || 0).toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -215,7 +217,7 @@ export function CouriersPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400">Total a repassar hoje:</span>
                       <span className="font-mono font-black text-emerald-400 text-sm">
-                        R$ {(courier.today_earnings || 0).toFixed(2)}
+                        R$ {Number(courier.today_earnings || 0).toFixed(2)}
                       </span>
                     </div>
                   </div>

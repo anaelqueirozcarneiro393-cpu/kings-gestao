@@ -488,7 +488,7 @@ export function CartDrawer({ isOpen, onClose, onOrderPlaced }) {
                         >
                           {deliveryZones.map(zone => (
                             <option key={zone.id} value={zone.name}>
-                              {zone.name} — Taxa: R$ {zone.fee.toFixed(2)} ({zone.estimated_minutes})
+                              {zone.name} — Taxa: R$ {Number(zone.fee || 0).toFixed(2)} ({zone.estimated_minutes})
                             </option>
                           ))}
                         </select>

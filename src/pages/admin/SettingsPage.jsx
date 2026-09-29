@@ -45,13 +45,13 @@ export function SettingsPage() {
     try {
       setLoading(true);
       const [bData, sData, zData] = await Promise.all([
-        api.getBusinesses(),
-        api.getSettings(),
+        api.getBusinesses().catch(() => []),
+        api.getSettings().catch(() => ({})),
         api.getDeliveryZones().catch(() => [])
       ]);
-      setBusinesses(bData);
-      setSettings(sData);
-      setDeliveryZones(zData);
+      setBusinesses(Array.isArray(bData) ? bData : []);
+      setSettings(sData && typeof sData === 'object' && !Array.isArray(sData) ? sData : {});
+      setDeliveryZones(Array.isArray(zData) ? zData : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -322,7 +322,7 @@ export function SettingsPage() {
 
               <div className="flex items-center gap-3">
                 <span className="font-mono font-bold text-amber-400">
-                  R$ {zone.fee.toFixed(2)}
+                  R$ {Number(zone.fee || 0).toFixed(2)}
                 </span>
                 <button
                   type="button"

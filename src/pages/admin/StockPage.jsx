@@ -101,18 +101,20 @@ export function StockPage({ selectedBusinessId }) {
     try {
       setLoading(true);
       const [iData, bData] = await Promise.all([
-        api.getIngredients(selectedBusinessId || ''),
-        api.getBusinesses()
+        api.getIngredients(selectedBusinessId || '').catch(() => []),
+        api.getBusinesses().catch(() => [])
       ]);
-      setIngredients(iData);
-      setBusinesses(bData.filter(b => b.active));
+      setIngredients(Array.isArray(iData) ? iData : []);
+      setBusinesses(Array.isArray(bData) ? bData.filter(b => b.active) : []);
 
       if (activeTab === 'movements') {
-        const mData = await api.getStockMovements({ business_id: selectedBusinessId || '' });
-        setMovements(mData);
+        const mData = await api.getStockMovements({ business_id: selectedBusinessId || '' }).catch(() => []);
+        setMovements(Array.isArray(mData) ? mData : []);
       }
     } catch (err) {
       console.error(err);
+      setIngredients([]);
+      setBusinesses([]);
     } finally {
       setLoading(false);
     }
@@ -316,12 +318,13 @@ export function StockPage({ selectedBusinessId }) {
     }
   };
 
-  const filteredIngredients = ingredients.filter(i => {
+  const safeIngredients = Array.isArray(ingredients) ? ingredients : [];
+  const filteredIngredients = safeIngredients.filter(i => {
     if (!searchQuery) return true;
     return i.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const lowStockCount = ingredients.filter(i => i.is_low_stock).length;
+  const lowStockCount = safeIngredients.filter(i => i.is_low_stock).length;
 
   return (
     <div className="space-y-6">
@@ -474,7 +477,7 @@ export function StockPage({ selectedBusinessId }) {
                         <td className="py-3 px-4 font-mono font-bold text-amber-400 text-right">
                           <div>
                             {ing.unit === 'g' || ing.unit === 'ml'
-                              ? `R$ ${ing.cost_per_unit.toFixed(4)} / ${ing.unit}`
+                              ? `R$ ${Number(ing.cost_per_unit || 0).toFixed(4)} / ${ing.unit}`
                               : `${formatCurrency(ing.cost_per_unit)} / ${ing.unit}`}
                           </div>
                           {(ing.unit === 'g' || ing.unit === 'ml') && (

@@ -1,7 +1,13 @@
 require('dotenv').config();
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
 const path = require('path');
 const fs = require('fs');
+
+// Garante que o PostgreSQL retorne colunas NUMERIC e BIGINT como números em vez de strings
+if (types) {
+  types.setTypeParser(1700, val => (val === null ? null : parseFloat(val)));
+  types.setTypeParser(20, val => (val === null ? null : parseInt(val, 10)));
+}
 
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
 const isPostgres = Boolean(databaseUrl);
