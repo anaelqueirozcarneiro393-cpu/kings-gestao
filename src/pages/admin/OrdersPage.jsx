@@ -38,6 +38,10 @@ export function OrdersPage({ selectedBusinessId }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [printingOrder, setPrintingOrder] = useState(null);
   const [couriers, setCouriers] = useState([]);
+  const [autoPrint, setAutoPrint] = useState(() => {
+    return localStorage.getItem('kings_autoprint_enabled') === 'true';
+  });
+  const [knownOrderIds, setKnownOrderIds] = useState(new Set());
 
   useEffect(() => {
     loadOrders();
@@ -50,7 +54,7 @@ export function OrdersPage({ selectedBusinessId }) {
       clearInterval(interval);
       window.removeEventListener('kings_order_updated', handleUpdate);
     };
-  }, [statusFilter, selectedBusinessId]);
+  }, [statusFilter, selectedBusinessId, autoPrint, knownOrderIds]);
 
   const loadCouriers = async () => {
     try {
@@ -76,6 +80,18 @@ export function OrdersPage({ selectedBusinessId }) {
         status: statusFilter,
         business_id: selectedBusinessId || ''
       });
+
+      // Auto-imprimir se ativado e chegar pedido novo
+      if (autoPrint && knownOrderIds.size > 0 && Array.isArray(data)) {
+        const brandNewOrder = data.find(o => !knownOrderIds.has(o.id) && o.status === 'novo');
+        if (brandNewOrder && (!printingOrder || printingOrder.id !== brandNewOrder.id)) {
+          setPrintingOrder(brandNewOrder);
+        }
+      }
+
+      if (Array.isArray(data)) {
+        setKnownOrderIds(new Set(data.map(o => o.id)));
+      }
       setOrders(data);
       if (selectedOrder) {
         const refreshed = data.find(o => o.id === selectedOrder.id);
@@ -130,16 +146,40 @@ export function OrdersPage({ selectedBusinessId }) {
           </p>
         </div>
 
-        {/* Busca */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Buscar por nome, nº ou tel..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
-          />
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          {/* Botão Auto-imprimir */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = !autoPrint;
+              setAutoPrint(next);
+              localStorage.setItem('kings_autoprint_enabled', String(next));
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+              autoPrint
+                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-sm'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+            title="Auto-imprimir: Abre a comanda automaticamente para impressão assim que chegar um novo pedido"
+          >
+            <Printer className="w-4 h-4 text-amber-400" />
+            <span className="hidden sm:inline">Auto-imprimir:</span>
+            <span className={autoPrint ? 'text-emerald-400 font-extrabold' : 'text-slate-500'}>
+              {autoPrint ? 'LIGADO' : 'DESLIGADO'}
+            </span>
+          </button>
+
+          {/* Busca */}
+          <div className="relative w-full sm:w-60">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Buscar por nome, nº ou tel..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+            />
+          </div>
         </div>
       </div>
 

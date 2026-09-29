@@ -13,9 +13,11 @@ import {
   CreditCard,
   Plus,
   Trash2,
-  Phone
+  Phone,
+  Printer
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { ThermalReceipt } from '../../components/admin/ThermalReceipt';
 
 export function SettingsPage() {
   const [businesses, setBusinesses] = useState([]);
@@ -24,6 +26,10 @@ export function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [testPrintingOrder, setTestPrintingOrder] = useState(null);
+  const [printerWidth, setPrinterWidth] = useState(() => localStorage.getItem('kings_printer_width') || '80mm');
+  const [defaultTicketView, setDefaultTicketView] = useState(() => localStorage.getItem('kings_printer_default_view') || 'completa');
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState(() => localStorage.getItem('kings_autoprint_enabled') === 'true');
 
   // Delivery zone modal / form
   const [newZoneName, setNewZoneName] = useState('');
@@ -425,6 +431,183 @@ export function SettingsPage() {
           </button>
         </div>
       </form>
+
+      {/* Configuração da Impressora Térmica */}
+      <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <Printer className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-100">
+                Impressora Térmica & Comandas
+              </h2>
+              <p className="text-xs text-slate-400">
+                Configurações de impressão física (Epson, Bematech, Elgin, Bluetooth 58mm/80mm)
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setTestPrintingOrder({
+                id: 9999,
+                order_number: 101,
+                customer_name: 'Cliente Demonstração',
+                customer_phone: '(11) 98765-4321',
+                delivery_type: 'delivery',
+                delivery_address: 'Av. Paulista, 1500 - Apto 42',
+                delivery_neighborhood: 'Bela Vista',
+                delivery_fee: 5.00,
+                discount: 0.00,
+                subtotal: 59.80,
+                total: 64.80,
+                payment_method: 'PIX',
+                payment_status: 'pago',
+                notes: 'Campainha não toca, favor bater no portão',
+                created_at: new Date().toISOString(),
+                items: [
+                  {
+                    product_name: "Kings Double Bacon",
+                    business_name: "KING'S BURGUER",
+                    quantity: 1,
+                    subtotal: 37.90,
+                    notes: 'Sem cebola crua',
+                    addons: [
+                      { name: 'Ao Ponto (Suculento)', unit_price: 0 },
+                      { name: 'Blend Artesanal Extra 160g', unit_price: 9.00 },
+                      { name: 'Bacon Crocante em Fatias', unit_price: 5.00 }
+                    ]
+                  },
+                  {
+                    product_name: "Açaí no Copo 500ml",
+                    business_name: "KING'S AÇAÍ",
+                    quantity: 1,
+                    subtotal: 22.90,
+                    addons: [
+                      { name: 'Leite em Pó (Ninho)', unit_price: 0 },
+                      { name: 'Granola Crocante', unit_price: 0 },
+                      { name: 'Banana Fatiada', unit_price: 0 },
+                      { name: 'Leite Condensado', unit_price: 0 },
+                      { name: 'Nutella Pura Extra', unit_price: 5.00 }
+                    ]
+                  }
+                ]
+              });
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Testar Impressão da Bobina</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          {/* Largura da Bobina */}
+          <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+            <span className="font-bold text-slate-200 block uppercase tracking-wider text-[11px]">
+              Tamanho do Papel / Bobina
+            </span>
+            <p className="text-[11px] text-slate-400">Escolha a largura da sua impressora física.</p>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setPrinterWidth('80mm');
+                  localStorage.setItem('kings_printer_width', '80mm');
+                }}
+                className={`p-2.5 rounded-xl border text-center font-bold transition-all cursor-pointer ${
+                  printerWidth === '80mm'
+                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
+                    : 'bg-slate-900 border-slate-800 text-slate-400'
+                }`}
+              >
+                <div>80mm</div>
+                <div className="text-[10px] text-slate-500 font-normal">Padrão balcão</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPrinterWidth('58mm');
+                  localStorage.setItem('kings_printer_width', '58mm');
+                }}
+                className={`p-2.5 rounded-xl border text-center font-bold transition-all cursor-pointer ${
+                  printerWidth === '58mm'
+                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
+                    : 'bg-slate-900 border-slate-800 text-slate-400'
+                }`}
+              >
+                <div>58mm</div>
+                <div className="text-[10px] text-slate-500 font-normal">Mini Bluetooth</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Via Padrão */}
+          <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+            <span className="font-bold text-slate-200 block uppercase tracking-wider text-[11px]">
+              Via Padrão ao Abrir
+            </span>
+            <p className="text-[11px] text-slate-400">Tipo de cupom padrão exibido primeiro.</p>
+            <select
+              value={defaultTicketView}
+              onChange={(e) => {
+                setDefaultTicketView(e.target.value);
+                localStorage.setItem('kings_printer_default_view', e.target.value);
+              }}
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-100 font-semibold focus:outline-none focus:border-amber-500/50 cursor-pointer"
+            >
+              <option value="completa">🧾 Via Completa (Balcão / Cliente)</option>
+              <option value="cozinha">👨‍🍳 Via de Cozinha (Sem preços)</option>
+              <option value="entrega">🛵 Via de Entrega (Motoboy)</option>
+              <option value="duas_vias">✂️ 2 Vias (Cozinha + Entrega com picote)</option>
+            </select>
+          </div>
+
+          {/* Auto-Impressão */}
+          <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+            <span className="font-bold text-slate-200 block uppercase tracking-wider text-[11px]">
+              Auto-impressão no Gestor
+            </span>
+            <p className="text-[11px] text-slate-400">Abrir comanda assim que novo pedido chega.</p>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !autoPrintEnabled;
+                setAutoPrintEnabled(next);
+                localStorage.setItem('kings_autoprint_enabled', String(next));
+              }}
+              className={`w-full py-2.5 px-3 rounded-xl border text-center font-bold transition-all cursor-pointer ${
+                autoPrintEnabled
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                  : 'bg-slate-900 border-slate-800 text-slate-400'
+              }`}
+            >
+              {autoPrintEnabled ? '✓ Auto-impressão ATIVADA' : '✗ Auto-impressão DESATIVADA'}
+            </button>
+          </div>
+        </div>
+
+        {/* Dicas de Configuração do Navegador */}
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200/90 leading-relaxed">
+          <span className="font-bold text-amber-400 block mb-1">💡 Dica para Impressão Térmica Perfeita:</span>
+          <span>
+            Na janela de impressão do Chrome/Edge (Ctrl+P), selecione sua impressora térmica, clique em <strong>"Mais definições"</strong> e <strong>desmarque a opção "Cabeçalhos e rodapés"</strong>. Isso evita que o navegador imprima URLs ou datas nas bordas do papel térmico!
+          </span>
+        </div>
+      </div>
+
+      {/* Modal de Teste de Impressão */}
+      {testPrintingOrder && (
+        <ThermalReceipt
+          order={testPrintingOrder}
+          initialView={defaultTicketView}
+          onClose={() => setTestPrintingOrder(null)}
+        />
+      )}
     </div>
   );
 }

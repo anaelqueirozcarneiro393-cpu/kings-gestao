@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { ChefHat, Clock, CheckCircle2, Flame, ArrowRight, RefreshCw, AlertTriangle, Bike, Store } from 'lucide-react';
+import { ChefHat, Clock, CheckCircle2, Flame, ArrowRight, RefreshCw, AlertTriangle, Bike, Store, Printer } from 'lucide-react';
 import { api } from '../../services/api';
 import { playNewOrderChime } from '../../utils/audio';
+import { ThermalReceipt } from '../../components/admin/ThermalReceipt';
 
 export function KdsPage({ selectedBusinessId }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [lastCount, setLastCount] = useState(0);
+  const [printingOrder, setPrintingOrder] = useState(null);
 
   useEffect(() => {
     loadOrders();
@@ -138,7 +140,20 @@ export function KdsPage({ selectedBusinessId }) {
                     <span className="font-mono text-lg font-black text-amber-400">
                       #{order.order_number}
                     </span>
-                    {getTimerBadge(order.elapsed_minutes)}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPrintingOrder(order);
+                        }}
+                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                        title="Imprimir comanda de cozinha"
+                      >
+                        <Printer className="w-3.5 h-3.5 text-amber-400" />
+                      </button>
+                      {getTimerBadge(order.elapsed_minutes)}
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs">
@@ -230,6 +245,15 @@ export function KdsPage({ selectedBusinessId }) {
             );
           })}
         </div>
+      )}
+
+      {/* Modal de Impressão Térmica da Cozinha */}
+      {printingOrder && (
+        <ThermalReceipt
+          order={printingOrder}
+          initialView="cozinha"
+          onClose={() => setPrintingOrder(null)}
+        />
       )}
     </div>
   );
