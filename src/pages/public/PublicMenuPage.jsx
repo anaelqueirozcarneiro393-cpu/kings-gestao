@@ -217,7 +217,7 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
           <>
             {/* Categorias Pills com Rolagem Suave e Fixação no Topo */}
             {businessCategories.length > 0 && (
-              <div className="sticky top-[102px] z-30 bg-[#0b0f17]/95 backdrop-blur-md -mx-4 px-4 py-2.5 mb-4 border-b border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-none shadow-sm">
+              <div className="sticky top-[102px] z-30 bg-[#0b0f17]/95 backdrop-blur-md -mx-4 px-4 py-2.5 mb-6 border-b border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-none shadow-sm">
                 <button
                   onClick={() => setSelectedCategory(null)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
@@ -228,118 +228,164 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
                 >
                   Todos os Itens
                 </button>
-                {businessCategories.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                      selectedCategory === cat.id
-                        ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/20'
-                        : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Grid de Produtos Otimizado para Mobile */}
-            {filteredProducts.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 bg-slate-900/30 rounded-2xl border border-slate-800/60 p-6">
-                Nenhum produto cadastrado nesta categoria.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {filteredProducts.map(prod => {
-                  const hasFreeAddons = prod.addon_groups?.some(g => Number(g.free_choices) > 0);
-                  const isAcai = currentBusiness?.slug === 'acai' || prod.name?.toLowerCase().includes('açaí');
+                {businessCategories.map(cat => {
+                  const discount = (() => {
+                    const n = (cat.name || '').toLowerCase();
+                    if (n.includes('combos individuais')) return '20% OFF';
+                    if (n.includes('combos para 2')) return '30% OFF';
+                    if (n.includes('hambúrguer artesanal')) return '20% OFF';
+                    if (n.includes('acompanhamentos')) return '30% OFF';
+                    return null;
+                  })();
 
                   return (
-                    <div
-                      key={prod.id}
-                      onClick={() => {
-                        if (!isOpen) {
-                          alert(`A operação ${currentBusiness?.name} está fechada no momento e abre às ${currentBusiness?.opening_time}. Você poderá fazer pedidos assim que a loja abrir.`);
-                          return;
-                        }
-                        setModalProduct(prod);
-                      }}
-                      className="p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 bg-slate-900/70 hover:border-amber-500/40 active:scale-[0.99] transition-all flex flex-col justify-between group shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden"
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                        selectedCategory === cat.id
+                          ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/20'
+                          : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                      }`}
                     >
-                      <div className="flex gap-3.5 sm:gap-4">
-                        {/* Textos */}
-                        <div className="flex-1 min-w-0">
-                          {/* Badges de Vantagem / Destaque */}
-                          <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-                            {hasFreeAddons ? (
-                              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 tracking-wide">
-                                🎁 4 Grátis Inclusos
-                              </span>
-                            ) : isAcai ? (
-                              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                                🍧 100% Puro & Cremoso
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                                ⭐ Artesanal
-                              </span>
-                            )}
-                          </div>
-
-                          <h3 className="text-sm font-bold text-slate-100 group-hover:text-amber-400 transition-colors leading-tight">
-                            {prod.name}
-                          </h3>
-                          {prod.description && (
-                            <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                              {prod.description}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Foto */}
-                        {prod.image_url ? (
-                          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-slate-950 shrink-0">
-                            <img
-                              src={prod.image_url}
-                              alt={prod.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              loading="lazy"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-slate-800/50 flex items-center justify-center shrink-0 text-3xl">
-                            {currentBusiness?.slug === 'acai' ? '🍧' : '🍔'}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Preço e Botão */}
-                      <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-slate-500 uppercase font-semibold">A partir de</span>
-                          <span className="font-mono text-sm sm:text-base font-black text-amber-400">
-                            {formatCurrency(prod.price)}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          disabled={!isOpen}
-                          className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all ${
-                            isOpen
-                              ? 'bg-amber-500 group-hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 active:scale-95'
-                              : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                          }`}
-                        >
-                          {isOpen ? '+ Adicionar' : 'Fechado'}
-                        </button>
-                      </div>
-                    </div>
+                      <span>{cat.name}</span>
+                      {discount && (
+                        <span className={`text-[9px] px-1 py-0.2 rounded font-black ${
+                          selectedCategory === cat.id ? 'bg-slate-950 text-amber-300' : 'bg-slate-800 text-slate-300'
+                        }`}>
+                          {discount}
+                        </span>
+                      )}
+                    </button>
                   );
                 })}
               </div>
             )}
+
+            {/* Categorias Agrupadas com Badges de Desconto e Produtos */}
+            {(() => {
+              const getCategoryDiscount = (name) => {
+                const n = (name || '').toLowerCase();
+                if (n.includes('combos individuais')) return '20% OFF';
+                if (n.includes('combos para 2')) return '30% OFF';
+                if (n.includes('hambúrguer artesanal')) return '20% OFF';
+                if (n.includes('acompanhamentos')) return '30% OFF';
+                return null;
+              };
+
+              const displayedCategories = selectedCategory
+                ? businessCategories.filter(c => Number(c.id) === Number(selectedCategory))
+                : businessCategories;
+
+              if (businessProducts.length === 0) {
+                return (
+                  <div className="text-center py-12 text-slate-400 bg-slate-900/30 rounded-2xl border border-slate-800/60 p-6">
+                    Nenhum produto cadastrado nesta categoria.
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-8">
+                  {displayedCategories.map(cat => {
+                    const catProducts = businessProducts.filter(p => Number(p.category_id) === Number(cat.id));
+                    if (catProducts.length === 0) return null;
+                    const discount = getCategoryDiscount(cat.name);
+
+                    return (
+                      <div key={cat.id} className="space-y-3.5">
+                        {/* Título da Categoria com Badge */}
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-base sm:text-lg font-black text-slate-100 tracking-tight">
+                            {cat.name}
+                          </h2>
+                          {discount && (
+                            <span className="text-[10px] sm:text-xs font-black uppercase px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                              {discount}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Grid de Produtos */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                          {catProducts.map(prod => (
+                            <div
+                              key={prod.id}
+                              onClick={() => {
+                                if (!isOpen) {
+                                  alert(`A operação ${currentBusiness?.name} está fechada no momento e abre às ${currentBusiness?.opening_time}. Você poderá fazer pedidos assim que a loja abrir.`);
+                                  return;
+                                }
+                                setModalProduct(prod);
+                              }}
+                              className="p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 bg-slate-900/70 hover:border-amber-500/40 active:scale-[0.99] transition-all flex flex-col justify-between group shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden"
+                            >
+                              <div className="flex gap-3 sm:gap-4">
+                                {/* Textos à esquerda */}
+                                <div className="flex-1 min-w-0 pr-1">
+                                  <h3 className="text-sm sm:text-base font-bold text-slate-100 group-hover:text-amber-400 transition-colors leading-tight">
+                                    {prod.name}
+                                  </h3>
+                                  {prod.description && (
+                                    <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                                      {prod.description}
+                                    </p>
+                                  )}
+                                  <div className="mt-2.5 font-mono text-sm sm:text-base font-black text-amber-400">
+                                    {formatCurrency(prod.price)}
+                                  </div>
+                                </div>
+
+                                {/* Foto e Badge 5% cashback à direita */}
+                                <div className="flex flex-col items-center shrink-0">
+                                  {prod.image_url ? (
+                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-slate-950">
+                                      <img
+                                        src={prod.image_url}
+                                        alt={prod.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        loading="lazy"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-slate-800/50 flex items-center justify-center text-3xl">
+                                      {currentBusiness?.slug === 'acai' ? '🍧' : '🍔'}
+                                    </div>
+                                  )}
+                                  <span className="mt-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold tracking-tight whitespace-nowrap">
+                                    5% cashback
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Ação Adicionar */}
+                              <div className="mt-3 pt-2.5 border-t border-slate-800/70 flex items-center justify-end">
+                                <button
+                                  type="button"
+                                  disabled={!isOpen}
+                                  className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all ${
+                                    isOpen
+                                      ? 'bg-amber-500 group-hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 active:scale-95'
+                                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                  }`}
+                                >
+                                  {isOpen ? '+ Adicionar' : 'Fechado'}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Rodapé Amigável */}
+                  <div className="text-center py-10 mt-6 border-t border-slate-800/80 text-xs sm:text-sm text-slate-400 font-medium">
+                    Obrigado por pedir na King's! 👑 ❤️
+                  </div>
+                </div>
+              );
+            })()}
           </>
         )}
       </div>

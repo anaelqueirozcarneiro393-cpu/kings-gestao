@@ -430,27 +430,53 @@ async function initSchema() {
         VALUES
           (1, 1, 'Açaí no Copo', 1, 1),
           (2, 1, 'Barcas & Roletas', 2, 1),
-          (10, 2, 'Destaque & Combos', 1, 1),
-          (11, 2, 'Hambúrguer Artesanal', 2, 1),
-          (12, 2, 'Acompanhamentos', 3, 1),
-          (13, 2, 'Bebidas', 4, 1)
-        ON CONFLICT (id) DO NOTHING;
+          (10, 2, 'Combos Individuais', 1, 1),
+          (11, 2, 'Combos para 2', 2, 1),
+          (12, 2, 'Hambúrguer Artesanal', 3, 1),
+          (13, 2, 'Acompanhamentos', 4, 1),
+          (14, 2, 'Bebidas', 5, 1)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          order_index = EXCLUDED.order_index,
+          active = 1;
 
         -- SEED DOS PRODUTOS OFICIAIS
         INSERT INTO products (id, business_id, category_id, name, description, image_url, price, active, availability, order_index)
         VALUES
           (1, 1, 1, 'Açaí no Copo 300ml', 'Copo de 300ml montado com nosso açaí cremoso batido na hora com xarope natural.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', 16.90, 1, 1, 1),
           (2, 1, 1, 'Açaí no Copo 500ml', 'O clássico mais pedido! 500ml de puro açaí cremoso com camadas generosas de complementos.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?auto=format&fit=crop&w=600&q=80', 22.90, 1, 1, 2),
-          (101, 2, 10, '2 King''s Classic + Coca 350ml', '2 king''s classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml', 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', 36.90, 1, 1, 1),
-          (102, 2, 10, 'Combo Double Bacon', 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon', 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', 39.90, 1, 1, 2),
-          (103, 2, 11, 'Kings Double Bacon', 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', 32.90, 1, 1, 1),
-          (104, 2, 11, 'Kings Classic', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', 19.90, 1, 1, 2),
-          (105, 2, 11, 'Kings Egg Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', 27.90, 1, 1, 3),
-          (106, 2, 11, 'Kings Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', 24.90, 1, 1, 4),
-          (107, 2, 12, 'Batata Frita 150g', 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição.', 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', 12.90, 1, 1, 1),
-          (108, 2, 12, 'Batata Frita 200g+ Cheddar e Bacon Crocante', '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', 17.90, 1, 1, 2),
-          (109, 2, 13, 'Coca-Cola 350ml', 'Lata 350ml estupidamente gelada.', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', 6.00, 1, 1, 1)
-        ON CONFLICT (id) DO NOTHING;
+          -- Combos Individuais (King's Burguer)
+          (110, 2, 10, 'Combo King''s Double Bacon', '1 King''s Double Bacon + 1 porção de Batata 150g + 1 Coca-Cola 350ml.', 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', 44.90, 1, 1, 1),
+          (111, 2, 10, 'Combo King''s Egg Bacon', '1 King''s Egg Bacon + 1 porção de Batata 150g + 1 Coca-Cola 350ml.', 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', 39.90, 1, 1, 2),
+          (112, 2, 10, 'Combo King''s Bacon', '1 King''s Bacon + 1 porção de Batata 150g + 1 Coca-Cola 350ml.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', 34.90, 1, 1, 3),
+          (113, 2, 10, 'Combo King''s Classic', '1 King''s Classic + 1 porção de Batata 150g + 1 Coca-Cola 350ml.', 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', 29.90, 1, 1, 4),
+          (114, 2, 10, 'Combo King''s BBQ', '1 King''s BBQ + 1 porção de Batata Frita 150g + 1 Coca-Cola 350ml.', 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?auto=format&fit=crop&w=600&q=80', 26.90, 1, 1, 5),
+          -- Combos para 2
+          (115, 2, 11, 'Combo Casal Supremo', '1 King''s Egg Bacon + 1 King''s Double Bacon + 1 Batata 200g com cheddar e bacon crocante + 2 Coca-Cola 350ml.', 'https://images.unsplash.com/photo-1521305916504-4a1121188589?auto=format&fit=crop&w=600&q=80', 77.90, 1, 1, 1),
+          (116, 2, 11, 'Combo Casal Bacon', '2 King''s Bacon + 1 Batata 200g com cheddar e bacon crocante + 2 Coca-Cola 350ml.', 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', 67.90, 1, 1, 2),
+          (101, 2, 11, '2 king''s classic + Coca lata 350ml', '2 king''s classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml', 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80', 39.90, 1, 1, 3),
+          -- Hambúrguer Artesanal
+          (103, 2, 12, 'Kings Double Bacon', 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80', 32.90, 1, 1, 1),
+          (105, 2, 12, 'Kings Egg Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80', 29.90, 1, 1, 2),
+          (106, 2, 12, 'Kings Bacon', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80', 24.90, 1, 1, 3),
+          (104, 2, 12, 'Kings Classic', 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80', 19.90, 1, 1, 4),
+          (117, 2, 12, 'King''s BBQ', 'Pão brioche, carne artesanal de 160g, cheddar cremoso e molho barbecue.', 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80', 15.90, 1, 1, 5),
+          -- Acompanhamentos
+          (118, 2, 13, 'Batata King''s 300g + Cheddar & Bacon', '300g de batata frita, coberta com cheddar cremoso e bacon crocante.', 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80', 24.90, 1, 1, 1),
+          (108, 2, 13, 'Batata Frita 200g+ Cheddar e Bacon Crocante', '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.', 'https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=600&q=80', 17.90, 1, 1, 2),
+          (119, 2, 13, 'Batata Cheddar', 'Batata 150g + Cheddar', 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=600&q=80', 14.90, 1, 1, 3),
+          (107, 2, 13, 'Batata Frita 150g', 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição, São O Acompanhamento Ideal Para Hambúrgueres.', 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80', 11.90, 1, 1, 4),
+          -- Bebidas
+          (120, 2, 14, '2 Coca 350ml', '2 Coca-Cola lata 350ml estupidamente geladas.', 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=600&q=80', 10.00, 1, 1, 1),
+          (109, 2, 14, 'Coca-Cola 350ml', 'Lata 350ml estupidamente gelada.', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80', 6.00, 1, 1, 2)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          category_id = EXCLUDED.category_id,
+          price = EXCLUDED.price,
+          description = EXCLUDED.description,
+          image_url = EXCLUDED.image_url,
+          order_index = EXCLUDED.order_index,
+          active = 1;
 
         -- SEED DE CONFIGURAÇÕES INICIAIS
         INSERT INTO settings (key, value) VALUES

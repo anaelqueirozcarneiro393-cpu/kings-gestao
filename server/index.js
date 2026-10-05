@@ -412,7 +412,7 @@ app.get('/api/public/menu', async (req, res) => {
     const attachAddonGroups = (product) => {
       const pName = (product.name || '').toLowerCase();
       const catId = Number(product.category_id);
-      const isDrinkOrSide = catId === 12 || catId === 13 || 
+      const isDrinkOrSide = catId === 13 || catId === 14 || 
         pName.includes('coca') || pName.includes('batata') || pName.includes('água') || pName.includes('refrigerante');
 
       const relevantGroups = groupsWithAddons.filter(g => {
@@ -438,75 +438,151 @@ app.get('/api/public/menu', async (req, res) => {
 
     // Garante que o cardápio oficial do King's Burguer seja retornado mesmo que o banco ainda não tenha sido populado
     const OFFICIAL_BURGUER_CATEGORIES = [
-      { id: 10, business_id: 2, name: 'Destaque & Combos', order_index: 1, active: 1 },
-      { id: 11, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 2, active: 1 },
-      { id: 12, business_id: 2, name: 'Acompanhamentos', order_index: 3, active: 1 },
-      { id: 13, business_id: 2, name: 'Bebidas', order_index: 4, active: 1 }
+      { id: 10, business_id: 2, name: 'Combos Individuais', order_index: 1, active: 1 },
+      { id: 11, business_id: 2, name: 'Combos para 2', order_index: 2, active: 1 },
+      { id: 12, business_id: 2, name: 'Hambúrguer Artesanal', order_index: 3, active: 1 },
+      { id: 13, business_id: 2, name: 'Acompanhamentos', order_index: 4, active: 1 },
+      { id: 14, business_id: 2, name: 'Bebidas', order_index: 5, active: 1 }
     ];
 
     const OFFICIAL_BURGUER_PRODUCTS = [
+      // Combos Individuais (10)
       {
-        id: 101, business_id: 2, category_id: 10, category_name: 'Destaque & Combos',
-        name: "2 King's Classic + Coca 350ml",
-        description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml",
-        image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
-        price: 36.90, active: 1, availability: 1, order_index: 1, addon_groups: []
+        id: 110, business_id: 2, category_id: 10, category_name: 'Combos Individuais',
+        name: "Combo King's Double Bacon",
+        description: "1 King's Double Bacon + 1 porção de Batata 150g + 1 Coca-Cola 350ml.",
+        image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80',
+        price: 44.90, active: 1, availability: 1, order_index: 1, addon_groups: []
       },
       {
-        id: 102, business_id: 2, category_id: 10, category_name: 'Destaque & Combos',
-        name: 'Combo Double Bacon',
-        description: 'Pão brioche, 2 hamburgueres de 120g cada, Queijo Cheddar cremoso, bacon crocante, cebola roxa e molho barbecue + 180g de batata com Cheddar e bacon',
-        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80',
+        id: 111, business_id: 2, category_id: 10, category_name: 'Combos Individuais',
+        name: "Combo King's Egg Bacon",
+        description: "1 King's Egg Bacon + 1 porção de Batata 150g + 1 Coca-Cola 350ml.",
+        image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
         price: 39.90, active: 1, availability: 1, order_index: 2, addon_groups: []
       },
       {
-        id: 103, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal',
+        id: 112, business_id: 2, category_id: 10, category_name: 'Combos Individuais',
+        name: "Combo King's Bacon",
+        description: "1 King's Bacon + 1 porção de Batata 150g + 1 Coca-Cola 350ml.",
+        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
+        price: 34.90, active: 1, availability: 1, order_index: 3, addon_groups: []
+      },
+      {
+        id: 113, business_id: 2, category_id: 10, category_name: 'Combos Individuais',
+        name: "Combo King's Classic",
+        description: "1 King's Classic + 1 porção de Batata 150g + 1 Coca-Cola 350ml.",
+        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80',
+        price: 29.90, active: 1, availability: 1, order_index: 4, addon_groups: []
+      },
+      {
+        id: 114, business_id: 2, category_id: 10, category_name: 'Combos Individuais',
+        name: "Combo King's BBQ",
+        description: "1 King's BBQ + 1 porção de Batata Frita 150g + 1 Coca-Cola 350ml.",
+        image_url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?auto=format&fit=crop&w=600&q=80',
+        price: 26.90, active: 1, availability: 1, order_index: 5, addon_groups: []
+      },
+      // Combos para 2 (11)
+      {
+        id: 115, business_id: 2, category_id: 11, category_name: 'Combos para 2',
+        name: "Combo Casal Supremo",
+        description: "1 King's Egg Bacon + 1 King's Double Bacon + 1 Batata 200g com cheddar e bacon crocante + 2 Coca-Cola 350ml.",
+        image_url: 'https://images.unsplash.com/photo-1521305916504-4a1121188589?auto=format&fit=crop&w=600&q=80',
+        price: 77.90, active: 1, availability: 1, order_index: 1, addon_groups: []
+      },
+      {
+        id: 116, business_id: 2, category_id: 11, category_name: 'Combos para 2',
+        name: "Combo Casal Bacon",
+        description: "2 King's Bacon + 1 Batata 200g com cheddar e bacon crocante + 2 Coca-Cola 350ml.",
+        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80',
+        price: 67.90, active: 1, availability: 1, order_index: 2, addon_groups: []
+      },
+      {
+        id: 101, business_id: 2, category_id: 11, category_name: 'Combos para 2',
+        name: "2 king's classic + Coca lata 350ml",
+        description: "2 king's classic com: Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue (cada unidade) + 1 Coca lata 350ml",
+        image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
+        price: 39.90, active: 1, availability: 1, order_index: 3, addon_groups: []
+      },
+      // Hambúrguer Artesanal (12)
+      {
+        id: 103, business_id: 2, category_id: 12, category_name: 'Hambúrguer Artesanal',
         name: 'Kings Double Bacon',
         description: 'Pão brioche, dois hambúrgueres de 120g cada, queijo cheddar cremoso, bacon crocante, cebola roxa e molho barbecue.',
         image_url: 'https://images.unsplash.com/photo-1582196016295-f8c8bd4b3e99?auto=format&fit=crop&w=600&q=80',
         price: 32.90, active: 1, availability: 1, order_index: 1, addon_groups: []
       },
       {
-        id: 104, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal',
-        name: 'Kings Classic',
-        description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.',
-        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
-        price: 19.90, active: 1, availability: 1, order_index: 2, addon_groups: []
-      },
-      {
-        id: 105, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal',
+        id: 105, business_id: 2, category_id: 12, category_name: 'Hambúrguer Artesanal',
         name: 'Kings Egg Bacon',
         description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, ovo, alface, tomate, cebola roxa e molho barbecue.',
         image_url: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80',
-        price: 27.90, active: 1, availability: 1, order_index: 3, addon_groups: []
+        price: 29.90, active: 1, availability: 1, order_index: 2, addon_groups: []
       },
       {
-        id: 106, business_id: 2, category_id: 11, category_name: 'Hambúrguer Artesanal',
+        id: 106, business_id: 2, category_id: 12, category_name: 'Hambúrguer Artesanal',
         name: 'Kings Bacon',
         description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, bacon crocante, alface, tomate, cebola roxa e molho barbecue.',
         image_url: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80',
-        price: 24.90, active: 1, availability: 1, order_index: 4, addon_groups: []
+        price: 24.90, active: 1, availability: 1, order_index: 3, addon_groups: []
       },
       {
-        id: 107, business_id: 2, category_id: 12, category_name: 'Acompanhamentos',
-        name: 'Batata Frita 150g',
-        description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição, São O Acompanhamento Ideal Para Hambúrgueres, Carnes e Refeições Rápidas, Ou Perfeitas Para Saborear Como Um Petisco Saboroso a Qualquer Hora Do Dia.',
-        image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
-        price: 12.90, active: 1, availability: 1, order_index: 1, addon_groups: []
+        id: 104, business_id: 2, category_id: 12, category_name: 'Hambúrguer Artesanal',
+        name: 'Kings Classic',
+        description: 'Pão brioche, hambúrguer artesanal de 160g, queijo cheddar cremoso, alface, tomate, cebola roxa e molho barbecue.',
+        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
+        price: 19.90, active: 1, availability: 1, order_index: 4, addon_groups: []
       },
       {
-        id: 108, business_id: 2, category_id: 12, category_name: 'Acompanhamentos',
+        id: 117, business_id: 2, category_id: 12, category_name: 'Hambúrguer Artesanal',
+        name: "King's BBQ",
+        description: 'Pão brioche, carne artesanal de 160g, cheddar cremoso e molho barbecue.',
+        image_url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80',
+        price: 15.90, active: 1, availability: 1, order_index: 5, addon_groups: []
+      },
+      // Acompanhamentos (13)
+      {
+        id: 118, business_id: 2, category_id: 13, category_name: 'Acompanhamentos',
+        name: "Batata King's 300g + Cheddar & Bacon",
+        description: '300g de batata frita, coberta com cheddar cremoso e bacon crocante.',
+        image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80',
+        price: 24.90, active: 1, availability: 1, order_index: 1, addon_groups: []
+      },
+      {
+        id: 108, business_id: 2, category_id: 13, category_name: 'Acompanhamentos',
         name: 'Batata Frita 200g+ Cheddar e Bacon Crocante',
         description: '180g de batatas fritas, cobertas com queijo cheddar cremoso e bacon crocante.',
-        image_url: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80',
+        image_url: 'https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=600&q=80',
         price: 17.90, active: 1, availability: 1, order_index: 2, addon_groups: []
       },
       {
-        id: 109, business_id: 2, category_id: 13, category_name: 'Bebidas',
+        id: 119, business_id: 2, category_id: 13, category_name: 'Acompanhamentos',
+        name: 'Batata Cheddar',
+        description: 'Batata 150g + Cheddar',
+        image_url: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=600&q=80',
+        price: 14.90, active: 1, availability: 1, order_index: 3, addon_groups: []
+      },
+      {
+        id: 107, business_id: 2, category_id: 13, category_name: 'Acompanhamentos',
+        name: 'Batata Frita 150g',
+        description: 'Batatas Fritas Sequinhas, Crocantes por Fora e Macias por Dentro. Cortadas No Ponto Certo e Douradas À Perfeição, São O Acompanhamento Ideal Para Hambúrgueres.',
+        image_url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
+        price: 11.90, active: 1, availability: 1, order_index: 4, addon_groups: []
+      },
+      // Bebidas (14)
+      {
+        id: 120, business_id: 2, category_id: 14, category_name: 'Bebidas',
+        name: '2 Coca 350ml',
+        description: '2 Coca-Cola lata 350ml estupidamente geladas.',
+        image_url: 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=600&q=80',
+        price: 10.00, active: 1, availability: 1, order_index: 1, addon_groups: []
+      },
+      {
+        id: 109, business_id: 2, category_id: 14, category_name: 'Bebidas',
         name: 'Coca-Cola 350ml',
         description: 'Lata 350ml estupidamente gelada.',
         image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
-        price: 6.00, active: 1, availability: 1, order_index: 1, addon_groups: []
+        price: 6.00, active: 1, availability: 1, order_index: 2, addon_groups: []
       }
     ];
 
