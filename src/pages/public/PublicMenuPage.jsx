@@ -65,9 +65,49 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
   const businessCategories = data?.categories?.filter(c => Number(c.business_id) === Number(currentBusiness?.id)) || [];
   const businessProducts = data?.products?.filter(p => Number(p.business_id) === Number(currentBusiness?.id)) || [];
 
-  const filteredProducts = selectedCategory
-    ? businessProducts.filter(p => Number(p.category_id) === Number(selectedCategory))
-    : businessProducts;
+  // Define a primeira categoria como ativa inicialmente
+  useEffect(() => {
+    if (businessCategories.length > 0 && !selectedCategory) {
+      setSelectedCategory(businessCategories[0].id);
+    }
+  }, [businessCategories, selectedCategory]);
+
+  // Função para rolar suavemente até a seção da categoria na página
+  const scrollToCategory = (catId) => {
+    setSelectedCategory(catId);
+    const el = document.getElementById(`category-section-${catId}`);
+    if (el) {
+      const headerOffset = 155;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Observa a rolagem para destacar dinamicamente a categoria que está na tela
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!businessCategories || businessCategories.length === 0) return;
+      const scrollPos = window.scrollY + 180;
+      for (let i = businessCategories.length - 1; i >= 0; i--) {
+        const cat = businessCategories[i];
+        const el = document.getElementById(`category-section-${cat.id}`);
+        if (el) {
+          const top = el.offsetTop;
+          if (scrollPos >= top) {
+            setSelectedCategory(cat.id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [businessCategories]);
 
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-100 pb-28">
@@ -218,17 +258,8 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
             {/* Categorias Pills com Rolagem Suave e Fixação no Topo */}
             {businessCategories.length > 0 && (
               <div className="sticky top-[102px] z-30 bg-[#0b0f17]/95 backdrop-blur-md -mx-4 px-4 py-2.5 mb-6 border-b border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-none shadow-sm">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                    selectedCategory === null
-                      ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/20'
-                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Todos os Itens
-                </button>
                 {businessCategories.map(cat => {
+                  const isSelected = selectedCategory === cat.id;
                   const discount = (() => {
                     const n = (cat.name || '').toLowerCase();
                     if (n.includes('combos individuais')) return '20% OFF';
@@ -241,17 +272,17 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
                   return (
                     <button
                       key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                        selectedCategory === cat.id
-                          ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/20'
+                      onClick={() => scrollToCategory(cat.id)}
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 active:scale-95 ${
+                        isSelected
+                          ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                           : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
                       }`}
                     >
                       <span>{cat.name}</span>
                       {discount && (
-                        <span className={`text-[9px] px-1 py-0.2 rounded font-black ${
-                          selectedCategory === cat.id ? 'bg-slate-950 text-amber-300' : 'bg-slate-800 text-slate-300'
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-black ${
+                          isSelected ? 'bg-slate-950 text-amber-300' : 'bg-slate-800 text-slate-300'
                         }`}>
                           {discount}
                         </span>
@@ -262,7 +293,7 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
               </div>
             )}
 
-            {/* Categorias Agrupadas com Badges de Desconto e Produtos */}
+            {/* Todas as Categorias e Produtos Visíveis Continuamente com Rolagem */}
             {(() => {
               const getCategoryDiscount = (name) => {
                 const n = (name || '').toLowerCase();
@@ -273,10 +304,6 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
                 return null;
               };
 
-              const displayedCategories = selectedCategory
-                ? businessCategories.filter(c => Number(c.id) === Number(selectedCategory))
-                : businessCategories;
-
               if (businessProducts.length === 0) {
                 return (
                   <div className="text-center py-12 text-slate-400 bg-slate-900/30 rounded-2xl border border-slate-800/60 p-6">
@@ -286,16 +313,20 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
               }
 
               return (
-                <div className="space-y-8">
-                  {displayedCategories.map(cat => {
+                <div className="space-y-10">
+                  {businessCategories.map(cat => {
                     const catProducts = businessProducts.filter(p => Number(p.category_id) === Number(cat.id));
                     if (catProducts.length === 0) return null;
                     const discount = getCategoryDiscount(cat.name);
 
                     return (
-                      <div key={cat.id} className="space-y-3.5">
+                      <div
+                        key={cat.id}
+                        id={`category-section-${cat.id}`}
+                        className="space-y-3.5 scroll-mt-44"
+                      >
                         {/* Título da Categoria com Badge */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 pt-2">
                           <h2 className="text-base sm:text-lg font-black text-slate-100 tracking-tight">
                             {cat.name}
                           </h2>
