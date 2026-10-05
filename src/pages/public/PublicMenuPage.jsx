@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ShoppingBag, Clock, MapPin, Phone, AlertCircle, ChevronRight, CheckCircle2, MessageCircle } from 'lucide-react';
 import { api } from '../../services/api';
 import { useCart } from '../../context/CartContext';
@@ -10,7 +10,7 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSlug, setSelectedSlug] = useState('acai');
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [activeCategoryId, setActiveCategoryId] = useState(null);
 
   // Modals
   const [modalProduct, setModalProduct] = useState(null);
@@ -40,17 +40,6 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0b0f17] flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-400 font-medium">Carregando cardápios KING'S...</p>
-        </div>
-      </div>
-    );
-  }
-
   const activeBusinesses = (data?.businesses && data.businesses.length > 0) ? data.businesses : [
     { id: 1, name: "KING'S AÇAÍ", slug: 'acai', tagline: 'O verdadeiro açaí artesanal e cremoso', is_open: true, active: 1, status: 'open', opening_time: '11:00', closing_time: '02:00' },
     { id: 2, name: "KING'S BURGUER", slug: 'burguer', tagline: 'Hambúrgueres artesanais feitos no fogo', is_open: true, active: 1, status: 'open', opening_time: '18:00', closing_time: '02:00' },
@@ -61,20 +50,20 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
   const isComingSoon = selectedSlug === 'pizza';
   const isOpen = currentBusiness?.is_open;
 
-  // Filter categories and products for the selected business
-  const businessCategories = data?.categories?.filter(c => Number(c.business_id) === Number(currentBusiness?.id)) || [];
-  const businessProducts = data?.products?.filter(p => Number(p.business_id) === Number(currentBusiness?.id)) || [];
+  // Filter categories and products with useMemo to prevent re-render loops
+  const businessCategories = useMemo(() => {
+    return data?.categories?.filter(c => Number(c.business_id) === Number(currentBusiness?.id)) || [];
+  }, [data?.categories, currentBusiness?.id]);
 
-  // Define a primeira categoria como ativa inicialmente
-  useEffect(() => {
-    if (businessCategories.length > 0 && !selectedCategory) {
-      setSelectedCategory(businessCategories[0].id);
-    }
-  }, [businessCategories, selectedCategory]);
+  const businessProducts = useMemo(() => {
+    return data?.products?.filter(p => Number(p.business_id) === Number(currentBusiness?.id)) || [];
+  }, [data?.products, currentBusiness?.id]);
+
+  const currentActiveCategory = activeCategoryId || (businessCategories[0]?.id ?? null);
 
   // Função para rolar suavemente até a seção da categoria na página
   const scrollToCategory = (catId) => {
-    setSelectedCategory(catId);
+    setActiveCategoryId(catId);
     const el = document.getElementById(`category-section-${catId}`);
     if (el) {
       const headerOffset = 155;
@@ -96,18 +85,31 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
         const cat = businessCategories[i];
         const el = document.getElementById(`category-section-${cat.id}`);
         if (el) {
-          const top = el.offsetTop;
-          if (scrollPos >= top) {
-            setSelectedCategory(cat.id);
-            break;
+          if (scrollPos >= el.offsetTop) {
+            setActiveCategoryId(prev => prev === cat.id ? prev : cat.id);
+            return;
           }
         }
+      }
+      if (businessCategories.length > 0) {
+        setActiveCategoryId(prev => prev === businessCategories[0].id ? prev : businessCategories[0].id);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [businessCategories]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0b0f17] flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-slate-400 font-medium">Carregando cardápios KING'S...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-100 pb-28">
@@ -153,7 +155,7 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
                 key={b.id}
                 onClick={() => {
                   setSelectedSlug(b.slug);
-                  setSelectedCategory(null);
+                  setActiveCategoryId(null);
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   isSelected
@@ -259,7 +261,7 @@ export function PublicMenuPage({ onOpenTracking, onNavigateAdmin }) {
             {businessCategories.length > 0 && (
               <div className="sticky top-[102px] z-30 bg-[#0b0f17]/95 backdrop-blur-md -mx-4 px-4 py-2.5 mb-6 border-b border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-none shadow-sm">
                 {businessCategories.map(cat => {
-                  const isSelected = selectedCategory === cat.id;
+                  const isSelected = currentActiveCategory === cat.id;
                   const discount = (() => {
                     const n = (cat.name || '').toLowerCase();
                     if (n.includes('combos individuais')) return '20% OFF';
