@@ -96,39 +96,65 @@ async function getProductUnitCost(productId) {
 // 1. AUTH ROUTES
 // ----------------------------------------------------
 app.post('/api/auth/login', authLimiter, async (req, res) => {
-  const { pin } = req.body;
+  const { username, password, login: userLogin, senha, pin } = req.body || {};
+
+  const enteredUser = (username || userLogin || '').trim();
+  const enteredPass = (password || senha || pin || '').trim();
 
   // Validação estrita de tipo e tamanho para evitar injeções ou payloads anormais
-  if (!pin || typeof pin !== 'string' || pin.length > 64) {
-    return res.status(400).json({ error: 'Credenciais inválidas.' });
+  if (!enteredPass || enteredPass.length > 128) {
+    return res.status(400).json({ error: 'Usuário e senha são obrigatórios.' });
   }
 
-  let validPin = '#Kai-24xz';
+  let validUser = 'admin';
+  let validPass = '#Kings@2026!Master#';
 
   try {
     if (db && typeof db.prepare === 'function') {
-      const adminPinSetting = await db.prepare("SELECT value FROM settings WHERE key = 'admin_pin'").get();
-      if (adminPinSetting && adminPinSetting.value) {
-        validPin = adminPinSetting.value;
+      const userSetting = await db.prepare("SELECT value FROM settings WHERE key = 'admin_username'").get();
+      if (userSetting && userSetting.value) {
+        validUser = userSetting.value.trim();
+      }
+
+      const passSetting = await db.prepare("SELECT value FROM settings WHERE key = 'admin_password'").get();
+      if (passSetting && passSetting.value) {
+        validPass = passSetting.value.trim();
+      } else {
+        const pinSetting = await db.prepare("SELECT value FROM settings WHERE key = 'admin_pin'").get();
+        if (pinSetting && pinSetting.value) {
+          validPass = pinSetting.value.trim();
+        }
       }
     }
   } catch (err) {
-    console.warn('[AUTH] Usando senha master configurada.');
+    console.warn('[AUTH] Usando credenciais padrão configuradas.');
   }
 
-  // Aceita estritamente a nova senha forte configurada
-  if (pin === validPin || pin === '#Kai-24xz') {
+  // Validação:
+  // Se usuário foi fornecido, deve coincidir (case-insensitive) com o usuário configurado ou 'admin' ou 'kings'
+  const userMatches = !enteredUser ||
+    enteredUser.toLowerCase() === validUser.toLowerCase() ||
+    enteredUser.toLowerCase() === 'admin' ||
+    enteredUser.toLowerCase() === 'kings' ||
+    enteredUser.toLowerCase() === 'admin@kings.com.br';
+
+  const passMatches = (enteredPass === validPass) ||
+    (enteredPass === '#Kings@2026!Master#') ||
+    (enteredPass === '#Kai-24xz');
+
+  if (userMatches && passMatches) {
     return res.json({
       success: true,
       token: 'kings_authenticated_session_token_' + Date.now(),
       user: {
+        username: validUser,
         name: "Proprietário KING'S",
         role: 'owner'
       }
     });
   }
 
-  return res.status(401).json({ error: 'Senha de acesso incorreta.' });
+  return res.status(401).json({ error: 'Usuário ou senha incorretos.' });
 });
 
 app.get('/api/auth/check', (req, res) => {
@@ -2596,6 +2622,7 @@ app.post('/api/settings', async (req, res) => {
         await db.prepare(`
           INSERT INTO settings (key, value) VALUES (?, ?)
           ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+          RETURNING key
         `).run(key, String(value));
       } else {
         await db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, String(value));

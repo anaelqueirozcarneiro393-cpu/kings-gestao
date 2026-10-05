@@ -18,8 +18,17 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = async (pin) => {
-    const res = await api.login(pin);
+  const login = async (usernameOrCreds, maybePassword) => {
+    let payload;
+    if (typeof usernameOrCreds === 'object' && usernameOrCreds !== null) {
+      payload = usernameOrCreds;
+    } else if (maybePassword !== undefined) {
+      payload = { username: usernameOrCreds, password: maybePassword };
+    } else {
+      payload = { pin: usernameOrCreds, password: usernameOrCreds };
+    }
+
+    const res = await api.login(payload);
     if (res.success) {
       localStorage.setItem('kings_token', res.token);
       localStorage.setItem('kings_user', JSON.stringify(res.user));

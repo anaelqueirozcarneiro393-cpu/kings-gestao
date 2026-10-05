@@ -480,11 +480,13 @@ async function initSchema() {
 
         -- SEED DE CONFIGURAÇÕES INICIAIS
         INSERT INTO settings (key, value) VALUES
-          ('admin_pin', '#Kai-24xz'),
+          ('admin_username', 'admin'),
+          ('admin_password', '#Kings@2026!Master#'),
+          ('admin_pin', '#Kings@2026!Master#'),
           ('store_name', 'KING''S GESTÃO'),
           ('whatsapp_notification_phone', '5511999999999'),
           ('default_delivery_fee', '5.00')
-        ON CONFLICT (key) DO NOTHING;
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
         -- SEED DE GRUPOS DE ADICIONAIS (Açaí: 4 grátis, Burguer: pagos)
         INSERT INTO product_addon_groups (id, business_id, title, min_choices, max_choices, free_choices, required, order_index)

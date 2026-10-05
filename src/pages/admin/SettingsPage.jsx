@@ -410,13 +410,26 @@ export function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1">PIN de Segurança do Painel</label>
+            <label className="block text-slate-300 font-semibold mb-1">Usuário / Login do Painel</label>
             <input
-              type="password"
-              value={settings.admin_pin || "1234"}
-              onChange={e => setSettings({ ...settings, admin_pin: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-mono tracking-widest focus:outline-none focus:border-amber-500/50"
+              type="text"
+              value={settings.admin_username || "admin"}
+              onChange={e => setSettings({ ...settings, admin_username: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-medium focus:outline-none focus:border-amber-500/50"
             />
+          </div>
+
+          <div>
+            <label className="block text-slate-300 font-semibold mb-1">Senha Forte de Acesso ao Painel</label>
+            <input
+              type="text"
+              value={settings.admin_password || settings.admin_pin || "#Kings@2026!Master#"}
+              onChange={e => setSettings({ ...settings, admin_password: e.target.value, admin_pin: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-mono focus:outline-none focus:border-amber-500/50"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Senha forte recomendada: <span className="font-mono text-amber-400">#Kings@2026!Master#</span>
+            </p>
           </div>
         </div>
 

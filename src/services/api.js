@@ -31,7 +31,10 @@ export const api = {
   syncDatabase: () => request('/admin/sync-database', { method: 'POST' }),
 
   // Auth
-  login: (pin) => request('/auth/login', { method: 'POST', body: JSON.stringify({ pin }) }),
+  login: (credentials) => request('/auth/login', { 
+    method: 'POST', 
+    body: JSON.stringify(typeof credentials === 'string' ? { pin: credentials, password: credentials } : credentials) 
+  }),
   checkAuth: () => request('/auth/check'),
 
   // Businesses
